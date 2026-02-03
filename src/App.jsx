@@ -109,7 +109,7 @@ function Sidebar({ service, onLogout, className = "" }) {
           notes.map(note => (
             <div 
               key={note.id} 
-              onClick={() => navigate(`/note/${note.id}`, { state: { path: note.path } })}
+              onClick={() => navigate(`/note/${note.id}`)}
               className="p-3 border-b hover:bg-blue-50 cursor-pointer"
             >
               <div className="font-medium truncate">{note.title}</div>
