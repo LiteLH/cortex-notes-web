@@ -1,6 +1,24 @@
 import { Octokit } from "octokit";
-import { Buffer } from "buffer";
 import matter from "gray-matter";
+
+// Utility for Base64 (Browser safe)
+function toBase64(str) {
+    try {
+        return btoa(unescape(encodeURIComponent(str)));
+    } catch (e) {
+        console.warn("Legacy base64 encode failed, trying simple btoa", e);
+        return btoa(str);
+    }
+}
+
+function fromBase64(str) {
+    try {
+        return decodeURIComponent(escape(atob(str)));
+    } catch (e) {
+        console.warn("Legacy base64 decode failed, trying simple atob", e);
+        return atob(str);
+    }
+}
 
 // Constants
 const DB_REPO_OWNER = "LiteLH"; // Replace with your username if different
@@ -32,7 +50,7 @@ export class GitHubService {
 
       if (Array.isArray(data)) throw new Error("Path is a directory");
       
-      const content = Buffer.from(data.content, "base64").toString("utf-8");
+      const content = fromBase64(data.content);
       return { content, sha: data.sha };
     } catch (e) {
       console.error(`Error fetching ${path}:`, e);
@@ -87,7 +105,7 @@ export class GitHubService {
         repo: DB_REPO_NAME,
         path: path,
         message: `feat: update note ${note.title}`,
-        content: Buffer.from(markdown).toString("base64"),
+        content: toBase64(markdown),
         sha: sha
     });
 
@@ -126,7 +144,7 @@ export class GitHubService {
         repo: DB_REPO_NAME,
         path: INDEX_PATH,
         message: `chore: update index for ${entry.title}`,
-        content: Buffer.from(JSON.stringify(index, null, 2)).toString("base64"),
+        content: toBase64(JSON.stringify(index, null, 2)),
         sha: sha
     });
   }
