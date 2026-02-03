@@ -1,21 +1,27 @@
 import { Octokit } from "octokit";
 import matter from "gray-matter";
 
+// Polyfill Buffer because gray-matter uses it internally
+// This is the "nuclear option" to fix "Can't find variable: Buffer"
+import { Buffer } from 'buffer';
+if (typeof window !== 'undefined') {
+    window.Buffer = Buffer;
+}
+
 // Robust Base64 Decoding for UTF-8 content from GitHub API
 function fromBase64(str) {
     try {
-        // GitHub API returns base64 with newlines, we must strip them
         const cleanStr = str.replace(/\n/g, '');
-        return decodeURIComponent(escape(atob(cleanStr)));
+        // Use Node's Buffer if available (better UTF-8 support), else fallback
+        return Buffer.from(cleanStr, 'base64').toString('utf-8');
     } catch (e) {
-        console.warn("Base64 decode failed", e);
-        // Fallback or re-throw
-        throw new Error("Failed to decode note content. Encoding issue?");
+        console.warn("Buffer decode failed, trying native", e);
+        return decodeURIComponent(escape(atob(str.replace(/\n/g, ''))));
     }
 }
 
 function toBase64(str) {
-     return btoa(unescape(encodeURIComponent(str)));
+     return Buffer.from(str).toString('base64');
 }
 
 // Constants
@@ -68,6 +74,7 @@ export class GitHubService {
 
   async getNote(path) {
     const file = await this.getFileContent(path);
+    // matter() might use Buffer internally, so we ensured it's polyfilled
     const { data, content } = matter(file.content);
     return { ...data, content, sha: file.sha, raw: file.content };
   }
