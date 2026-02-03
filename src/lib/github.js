@@ -1,23 +1,21 @@
 import { Octokit } from "octokit";
 import matter from "gray-matter";
 
-// Utility for Base64 (Browser safe)
-function toBase64(str) {
+// Robust Base64 Decoding for UTF-8 content from GitHub API
+function fromBase64(str) {
     try {
-        return btoa(unescape(encodeURIComponent(str)));
+        // GitHub API returns base64 with newlines, we must strip them
+        const cleanStr = str.replace(/\n/g, '');
+        return decodeURIComponent(escape(atob(cleanStr)));
     } catch (e) {
-        console.warn("Legacy base64 encode failed, trying simple btoa", e);
-        return btoa(str);
+        console.warn("Base64 decode failed", e);
+        // Fallback or re-throw
+        throw new Error("Failed to decode note content. Encoding issue?");
     }
 }
 
-function fromBase64(str) {
-    try {
-        return decodeURIComponent(escape(atob(str)));
-    } catch (e) {
-        console.warn("Legacy base64 decode failed, trying simple atob", e);
-        return atob(str);
-    }
+function toBase64(str) {
+     return btoa(unescape(encodeURIComponent(str)));
 }
 
 // Constants
@@ -54,24 +52,22 @@ export class GitHubService {
       return { content, sha: data.sha };
     } catch (e) {
       console.error(`Error fetching ${path}:`, e);
-      return null;
+      throw e; // Propagate error to UI
     }
   }
 
   async getNotesIndex() {
-    const file = await this.getFileContent(INDEX_PATH);
-    if (!file) return [];
     try {
-      return JSON.parse(file.content);
+        const file = await this.getFileContent(INDEX_PATH);
+        return JSON.parse(file.content);
     } catch (e) {
-      console.error("Error parsing index.json", e);
-      return [];
+        console.error("Error fetching index", e);
+        return [];
     }
   }
 
   async getNote(path) {
     const file = await this.getFileContent(path);
-    if (!file) return null;
     const { data, content } = matter(file.content);
     return { ...data, content, sha: file.sha, raw: file.content };
   }
@@ -96,8 +92,10 @@ export class GitHubService {
     
     // 3. Get existing SHA if updating
     let sha = undefined;
-    const existing = await this.getFileContent(path);
-    if (existing) sha = existing.sha;
+    try {
+        const existing = await this.getFileContent(path);
+        sha = existing.sha;
+    } catch (e) { /* ignore 404 */ }
 
     // 4. Commit Note File
     await this.octokit.rest.repos.createOrUpdateFileContents({
@@ -124,14 +122,14 @@ export class GitHubService {
   }
 
   async updateIndex(entry) {
-    const indexFile = await this.getFileContent(INDEX_PATH);
     let index = [];
     let sha = undefined;
 
-    if (indexFile) {
+    try {
+        const indexFile = await this.getFileContent(INDEX_PATH);
         index = JSON.parse(indexFile.content);
         sha = indexFile.sha;
-    }
+    } catch (e) { /* ignore */ }
 
     // Remove old entry if exists
     index = index.filter(i => i.id !== entry.id);
