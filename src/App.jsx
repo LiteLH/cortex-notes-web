@@ -244,7 +244,36 @@ function NoteViewer({ service }) {
         </div>
       </div>
       <article className="prose lg:prose-xl max-w-none">
-        <pre className="whitespace-pre-wrap font-sans text-base">{note.content}</pre>
+        {/* Simple markdown renderer */}
+        {note.content.split('\n').map((line, i) => {
+            // Headers
+            if (line.startsWith('# ')) return <h1 key={i} className="text-3xl font-bold mt-6 mb-4">{line.replace('# ', '')}</h1>;
+            if (line.startsWith('## ')) return <h2 key={i} className="text-2xl font-bold mt-5 mb-3">{line.replace('## ', '')}</h2>;
+            if (line.startsWith('### ')) return <h3 key={i} className="text-xl font-bold mt-4 mb-2">{line.replace('### ', '')}</h3>;
+            
+            // Images: ![alt](url)
+            const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
+            if (imgMatch) {
+                return (
+                    <div key={i} className="my-4">
+                        <img src={imgMatch[2]} alt={imgMatch[1]} className="rounded-lg shadow-md max-w-full" />
+                        {imgMatch[1] && <p className="text-sm text-gray-500 mt-1 text-center">{imgMatch[1]}</p>}
+                    </div>
+                );
+            }
+
+            // Tables (simple rendering)
+            if (line.includes('|')) return <pre key={i} className="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-2 rounded overflow-x-auto">{line}</pre>;
+
+            // Separator
+            if (line.trim() === '---') return <hr key={i} className="my-6 border-gray-300" />;
+
+            // Empty lines
+            if (!line.trim()) return <div key={i} className="h-4"></div>;
+
+            // Default text
+            return <p key={i} className="mb-2">{line}</p>;
+        })}
       </article>
       <button 
         onClick={() => navigate(`/edit/${id}`)}
