@@ -197,23 +197,41 @@ function NoteViewer({ service }) {
   const navigate = useNavigate();
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     service.getNotesIndex().then(index => {
       const entry = index.find(n => n.id === id);
       if (entry) {
-        service.getNote(entry.path).then(n => {
-            setNote(n);
-            setLoading(false);
-        });
+        service.getNote(entry.path)
+            .then(n => {
+                setNote(n);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to load note:", err);
+                setError(err.message || "Failed to load note content.");
+                setLoading(false);
+            });
       } else {
+        setError("Note not found in index.");
         setLoading(false);
       }
+    }).catch(err => {
+        setError("Failed to load index.");
+        setLoading(false);
     });
   }, [id, service]);
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin" /></div>;
+  if (error) return (
+    <div className="p-8 text-center">
+        <div className="text-red-500 mb-2">Error: {error}</div>
+        <button onClick={() => window.location.reload()} className="text-blue-500 underline">Retry</button>
+    </div>
+  );
   if (!note) return <div className="p-8 text-center">Note not found.</div>;
 
   return (
