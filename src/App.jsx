@@ -10,7 +10,7 @@ import {
 import Fuse from 'fuse.js';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { format, isToday, isYesterday, isThisWeek, parseISO } from 'date-fns';
+import { format, isToday, isYesterday, isThisWeek, parseISO, isValid } from 'date-fns';
 import { Command as CommandPrimitive } from 'cmdk';
 
 function cn(...inputs) {
@@ -87,8 +87,17 @@ function App() {
           setIsAuthenticated(true);
           setAuthError(null);
           gh.getNotesIndex().then(data => {
-              // Sort by date desc initially
-              const sorted = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+              // Safety: Ensure created_at exists and is valid before sorting
+              const safeData = (data || []).map(n => ({
+                  ...n,
+                  created_at: n.created_at || new Date().toISOString()
+              }));
+              
+              const sorted = safeData.sort((a, b) => {
+                  const dateA = new Date(a.created_at);
+                  const dateB = new Date(b.created_at);
+                  return (isValid(dateB) ? dateB : new Date()) - (isValid(dateA) ? dateA : new Date());
+              });
               setNotes(sorted);
           });
         } else {
@@ -132,7 +141,11 @@ function App() {
   const refreshNotes = () => {
     if (service) {
         service.getNotesIndex().then(data => {
-            const sorted = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            const safeData = (data || []).map(n => ({
+                  ...n,
+                  created_at: n.created_at || new Date().toISOString()
+            }));
+            const sorted = safeData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             setNotes(sorted);
         });
     }
@@ -162,7 +175,7 @@ function App() {
         <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
         
         {/* Global Command Palette */}
-        <CommandPalette open={openCmd} onOpenChange={setOpenCmd} notes={notes} />
+        {openCmd && <CommandPalette open={openCmd} onOpenChange={setOpenCmd} notes={notes} />}
       </div>
     </Router>
   );
@@ -172,19 +185,23 @@ function App() {
 function CommandPalette({ open, onOpenChange, notes }) {
     const navigate = useNavigate();
     
+    // Safety: Ensure notes is an array
+    const safeNotes = Array.isArray(notes) ? notes : [];
+
     return (
       <CommandPrimitive.Dialog 
         open={open} 
         onOpenChange={onOpenChange}
-        className="fixed inset-0 z-[100] p-4 pt-[20vh] md:pt-[15vh] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] p-4 pt-[20vh] md:pt-[15vh] bg-black/50 backdrop-blur-sm flex justify-center items-start"
         onClick={(e) => { if(e.target === e.currentTarget) onOpenChange(false); }}
       >
-        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
                 <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
                 <CommandPrimitive.Input 
                     placeholder="Search notes, commands, tags..." 
                     className="flex h-14 w-full rounded-md bg-transparent py-3 text-lg outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    autoFocus
                 />
             </div>
             <CommandPrimitive.List className="max-h-[60vh] overflow-y-auto p-2">
@@ -201,7 +218,7 @@ function CommandPalette({ open, onOpenChange, notes }) {
                 </CommandPrimitive.Group>
 
                 <CommandPrimitive.Group heading="Recent Notes" className="px-2 py-1.5 text-xs font-medium text-gray-500">
-                    {notes.slice(0, 10).map(note => (
+                    {safeNotes.slice(0, 10).map(note => (
                         <CommandPrimitive.Item 
                             key={note.id}
                             className="flex cursor-default select-none items-center rounded-sm px-2 py-3 text-sm outline-none aria-selected:bg-blue-50 aria-selected:text-blue-700"
@@ -209,7 +226,9 @@ function CommandPalette({ open, onOpenChange, notes }) {
                         >
                             <FileText className="mr-2 h-4 w-4" />
                             <span className="flex-1 truncate">{note.title || "Untitled"}</span>
-                            <span className="text-xs text-gray-400 ml-2">{new Date(note.created_at).toLocaleDateString()}</span>
+                            <span className="text-xs text-gray-400 ml-2">
+                                {isValid(new Date(note.created_at)) ? new Date(note.created_at).toLocaleDateString() : ''}
+                            </span>
                         </CommandPrimitive.Item>
                     ))}
                 </CommandPrimitive.Group>
@@ -222,14 +241,15 @@ function CommandPalette({ open, onOpenChange, notes }) {
 // Sidebar: "Smart Sections" instead of just folders
 function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
   const navigate = useNavigate();
+  const safeNotes = Array.isArray(notes) ? notes : [];
   
   // Smart Filters
-  const recentNotes = useMemo(() => notes.slice(0, 5), [notes]);
+  const recentNotes = useMemo(() => safeNotes.slice(0, 5), [safeNotes]);
   const tags = useMemo(() => {
       const counts = {};
-      notes.forEach(n => n.tags?.forEach(t => counts[t] = (counts[t] || 0) + 1));
+      safeNotes.forEach(n => n.tags?.forEach(t => counts[t] = (counts[t] || 0) + 1));
       return Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
-  }, [notes]);
+  }, [safeNotes]);
 
   return (
     <div className={cn("w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full shrink-0", className)}>
@@ -352,21 +372,30 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
 // Timeline View Home
 function Home({ notes, onOpenCmd }) {
   const navigate = useNavigate();
+  const safeNotes = Array.isArray(notes) ? notes : [];
   
   // Group notes by time
   const timeline = useMemo(() => {
     const groups = { Today: [], Yesterday: [], ThisWeek: [], Older: [] };
     
-    notes.forEach(note => {
-        const date = parseISO(note.created_at);
-        if (isToday(date)) groups.Today.push(note);
-        else if (isYesterday(date)) groups.Yesterday.push(note);
-        else if (isThisWeek(date)) groups.ThisWeek.push(note);
-        else groups.Older.push(note);
+    safeNotes.forEach(note => {
+        try {
+            const date = parseISO(note.created_at);
+            if (!isValid(date)) {
+                groups.Older.push(note); // Fallback for invalid dates
+                return;
+            }
+            if (isToday(date)) groups.Today.push(note);
+            else if (isYesterday(date)) groups.Yesterday.push(note);
+            else if (isThisWeek(date)) groups.ThisWeek.push(note);
+            else groups.Older.push(note);
+        } catch (e) {
+            groups.Older.push(note);
+        }
     });
     
     return groups;
-  }, [notes]);
+  }, [safeNotes]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
@@ -402,7 +431,7 @@ function Home({ notes, onOpenCmd }) {
             )
          ))}
          
-         {notes.length === 0 && (
+         {safeNotes.length === 0 && (
             <div className="text-center py-20 text-gray-400">
                 <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Book size={32} className="opacity-20" />
@@ -418,8 +447,10 @@ function Home({ notes, onOpenCmd }) {
 
 function TimelineCard({ note, onClick }) {
     // Determine icon based on tags/title
-    const isReport = note.tags?.some(t => ['report', 'research', 'deep-dive'].includes(t)) || note.title.includes('Report');
+    const isReport = note.tags?.some(t => ['report', 'research', 'deep-dive'].includes(t)) || (note.title || '').includes('Report');
     const isJob = note.tags?.some(t => ['career', 'job', 'resume'].includes(t));
+    const safeDate = note.created_at ? new Date(note.created_at) : new Date();
+    const timeStr = isValid(safeDate) ? format(safeDate, 'HH:mm') : '--:--';
     
     return (
         <div 
@@ -435,7 +466,7 @@ function TimelineCard({ note, onClick }) {
                     </h3>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono">
-                    {format(parseISO(note.created_at), 'HH:mm')}
+                    {timeStr}
                 </span>
             </div>
             
