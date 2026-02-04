@@ -11,13 +11,16 @@
   },
   "dependencies": {
     "buffer": "^6.0.3",
+    "clsx": "^2.1.1",
+    "fuse.js": "^7.1.0",
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1",
     "lucide-react": "^0.563.0",
     "octokit": "^5.0.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.0"
+    "react-router-dom": "^7.13.0",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
