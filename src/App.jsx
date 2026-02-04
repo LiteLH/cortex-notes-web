@@ -1,20 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubService } from './lib/github';
 import { 
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
-  LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown 
+  LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
+  Command, Calendar, ArrowRight, Star
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { format, isToday, isYesterday, isThisWeek, parseISO } from 'date-fns';
+import { Command as CommandPrimitive } from 'cmdk';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-// ... (AuthScreen code remains same) ...
+// ... (AuthScreen remains same) ...
 function AuthScreen({ onLogin, error }) {
   const [input, setInput] = useState('');
   
@@ -72,7 +75,8 @@ function App() {
   const [service, setService] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authError, setAuthError] = useState(null);
-  const [notes, setNotes] = useState([]); // Centralized notes state
+  const [notes, setNotes] = useState([]);
+  const [openCmd, setOpenCmd] = useState(false); // Command Palette State
 
   useEffect(() => {
     if (token) {
@@ -82,8 +86,11 @@ function App() {
           setService(gh);
           setIsAuthenticated(true);
           setAuthError(null);
-          // Initial Fetch
-          gh.getNotesIndex().then(setNotes);
+          gh.getNotesIndex().then(data => {
+              // Sort by date desc initially
+              const sorted = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+              setNotes(sorted);
+          });
         } else {
           setIsAuthenticated(false);
           setAuthError(res.error || "Invalid token");
@@ -91,6 +98,18 @@ function App() {
       });
     }
   }, [token]);
+
+  // Command Palette Shortcut
+  useEffect(() => {
+    const down = (e) => {
+      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setOpenCmd((open) => !open);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
 
   const handleLogin = (t) => {
     if (!t.trim()) {
@@ -112,8 +131,10 @@ function App() {
 
   const refreshNotes = () => {
     if (service) {
-        // Cache busting
-        service.getNotesIndex().then(setNotes);
+        service.getNotesIndex().then(data => {
+            const sorted = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            setNotes(sorted);
+        });
     }
   };
 
@@ -123,99 +144,154 @@ function App() {
 
   return (
     <Router>
-      <div className="flex h-screen bg-gray-50 text-gray-900 font-sans flex-col md:flex-row">
+      <div className="flex h-screen bg-gray-50 text-gray-900 font-sans flex-col md:flex-row overflow-hidden">
         <Sidebar 
             notes={notes} 
             onLogout={handleLogout} 
+            onOpenCmd={() => setOpenCmd(true)}
             className="hidden md:flex" 
         />
-        <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white">
+        <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
           <Routes>
-            <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} />} />
+            <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
             <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} />} />
             <Route path="/new" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
             <Route path="/edit/:id" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
           </Routes>
         </main>
-        <MobileNav refreshNotes={refreshNotes} />
+        <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
+        
+        {/* Global Command Palette */}
+        <CommandPalette open={openCmd} onOpenChange={setOpenCmd} notes={notes} />
       </div>
     </Router>
   );
 }
 
-// Enhanced Sidebar with Folders
-function Sidebar({ notes, onLogout, className = "" }) {
-  const navigate = useNavigate();
-  const [expandedFolders, setExpandedFolders] = useState({});
+// Command Palette Component (CMDK)
+function CommandPalette({ open, onOpenChange, notes }) {
+    const navigate = useNavigate();
+    
+    return (
+      <CommandPrimitive.Dialog 
+        open={open} 
+        onOpenChange={onOpenChange}
+        className="fixed inset-0 z-[100] p-4 pt-[20vh] md:pt-[15vh] bg-black/50 backdrop-blur-sm"
+        onClick={(e) => { if(e.target === e.currentTarget) onOpenChange(false); }}
+      >
+        <div className="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+                <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
+                <CommandPrimitive.Input 
+                    placeholder="Search notes, commands, tags..." 
+                    className="flex h-14 w-full rounded-md bg-transparent py-3 text-lg outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+            </div>
+            <CommandPrimitive.List className="max-h-[60vh] overflow-y-auto p-2">
+                <CommandPrimitive.Empty className="py-6 text-center text-sm text-gray-500">No results found.</CommandPrimitive.Empty>
+                
+                <CommandPrimitive.Group heading="Actions" className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                    <CommandPrimitive.Item 
+                        className="flex cursor-default select-none items-center rounded-sm px-2 py-3 text-sm outline-none aria-selected:bg-blue-50 aria-selected:text-blue-700 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                        onSelect={() => { onOpenChange(false); navigate('/new'); }}
+                    >
+                        <Plus className="mr-2 h-4 w-4" />
+                        <span>Create New Note</span>
+                    </CommandPrimitive.Item>
+                </CommandPrimitive.Group>
 
-  // 1. Group by Folder
-  const structure = useMemo(() => {
-    const tree = {};
-    notes.forEach(note => {
-      // Path example: content/2026/note.md -> Folder: 2026
-      const parts = note.path.split('/');
-      // Assume structure: content/<folder>/<filename>
-      // If path is short, put in root
-      let folder = 'Root';
-      if (parts.length > 2) {
-          folder = parts[1]; // e.g. 2026, inbox
-      }
-      if (!tree[folder]) tree[folder] = [];
-      tree[folder].push(note);
-    });
-    return tree;
+                <CommandPrimitive.Group heading="Recent Notes" className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                    {notes.slice(0, 10).map(note => (
+                        <CommandPrimitive.Item 
+                            key={note.id}
+                            className="flex cursor-default select-none items-center rounded-sm px-2 py-3 text-sm outline-none aria-selected:bg-blue-50 aria-selected:text-blue-700"
+                            onSelect={() => { onOpenChange(false); navigate(`/note/${note.id}`); }}
+                        >
+                            <FileText className="mr-2 h-4 w-4" />
+                            <span className="flex-1 truncate">{note.title || "Untitled"}</span>
+                            <span className="text-xs text-gray-400 ml-2">{new Date(note.created_at).toLocaleDateString()}</span>
+                        </CommandPrimitive.Item>
+                    ))}
+                </CommandPrimitive.Group>
+            </CommandPrimitive.List>
+        </div>
+      </CommandPrimitive.Dialog>
+    );
+}
+
+// Sidebar: "Smart Sections" instead of just folders
+function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
+  const navigate = useNavigate();
+  
+  // Smart Filters
+  const recentNotes = useMemo(() => notes.slice(0, 5), [notes]);
+  const tags = useMemo(() => {
+      const counts = {};
+      notes.forEach(n => n.tags?.forEach(t => counts[t] = (counts[t] || 0) + 1));
+      return Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
   }, [notes]);
 
-  const toggleFolder = (folder) => {
-    setExpandedFolders(prev => ({
-        ...prev,
-        [folder]: !prev[folder]
-    }));
-  };
-
   return (
-    <div className={cn("w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full", className)}>
-      <div className="p-4 border-b flex justify-between items-center bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-2 font-bold text-gray-800">
-            <Book className="w-5 h-5 text-blue-600" />
-            <span>Cortex Notes</span>
+    <div className={cn("w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full shrink-0", className)}>
+      <div className="p-4 border-b flex items-center gap-3">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-sm shadow-blue-200">
+            <Book size={18} />
         </div>
-        <Link to="/new" className="p-1.5 hover:bg-gray-100 rounded-full text-blue-600 transition-colors">
-            <Plus size={20} />
-        </Link>
+        <div className="font-bold text-gray-800 tracking-tight">Cortex</div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {Object.entries(structure).map(([folder, folderNotes]) => (
-            <div key={folder}>
-                <button 
-                    onClick={() => toggleFolder(folder)}
-                    className="flex items-center w-full p-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                    {expandedFolders[folder] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                    <Folder size={16} className="ml-1 mr-2 text-blue-500" />
-                    {folder}
-                    <span className="ml-auto text-xs text-gray-400">{folderNotes.length}</span>
-                </button>
-                
-                {expandedFolders[folder] && (
-                    <div className="ml-4 pl-2 border-l-2 border-gray-200 space-y-0.5 mt-1">
-                        {folderNotes.map(note => (
-                            <div 
-                                key={note.id} 
-                                onClick={() => navigate(`/note/${note.id}`)}
-                                className="p-2 text-sm text-gray-700 hover:bg-white hover:shadow-sm rounded-md cursor-pointer truncate transition-all"
-                            >
-                                {note.title || "Untitled"}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        ))}
+      <div className="p-3">
+        <button 
+            onClick={onOpenCmd}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
+        >
+            <Search size={14} />
+            <span>Search...</span>
+            <kbd className="ml-auto text-[10px] bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-mono text-gray-400">⌘K</kbd>
+        </button>
       </div>
 
-      <div className="p-4 border-t bg-gray-50">
+      <div className="flex-1 overflow-y-auto px-3 space-y-6">
+        {/* Section: Start */}
+        <div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Start</div>
+            <div className="space-y-0.5">
+                <SidebarItem icon={HomeIcon} label="Home" active onClick={() => navigate('/')} />
+                <SidebarItem icon={Plus} label="New Note" onClick={() => navigate('/new')} />
+            </div>
+        </div>
+
+        {/* Section: Recent */}
+        <div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Recent</div>
+            <div className="space-y-0.5">
+                {recentNotes.map(note => (
+                    <div 
+                        key={note.id}
+                        onClick={() => navigate(`/note/${note.id}`)}
+                        className="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-200/50 hover:text-gray-900 rounded-md cursor-pointer transition-colors"
+                    >
+                        <FileText size={14} className="text-gray-400 group-hover:text-blue-500" />
+                        <span className="truncate">{note.title || "Untitled"}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Section: Tags */}
+        <div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Tags</div>
+            <div className="flex flex-wrap gap-1.5 px-1">
+                {tags.map(([tag, count]) => (
+                    <span key={tag} className="px-2 py-1 bg-white border border-gray-200 rounded-md text-xs text-gray-600 hover:border-blue-300 cursor-pointer">
+                        #{tag}
+                    </span>
+                ))}
+            </div>
+        </div>
+      </div>
+
+      <div className="p-4 border-t bg-gray-50/50">
         <button onClick={onLogout} className="flex items-center gap-2 text-gray-500 text-sm w-full hover:bg-red-50 hover:text-red-600 p-2 rounded transition-colors">
           <LogOut size={16} /> Logout
         </button>
@@ -224,120 +300,161 @@ function Sidebar({ notes, onLogout, className = "" }) {
   );
 }
 
-function MobileNav({ refreshNotes }) {
+function SidebarItem({ icon: Icon, label, active, onClick }) {
+    return (
+        <button 
+            onClick={onClick}
+            className={cn(
+                "w-full flex items-center gap-2 px-2 py-1.5 text-sm font-medium rounded-md transition-colors",
+                active ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-100"
+            )}
+        >
+            <Icon size={16} className={active ? "text-blue-600" : "text-gray-400"} />
+            {label}
+        </button>
+    )
+}
+
+function MobileNav({ refreshNotes, onOpenCmd }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path ? "text-blue-600" : "text-gray-400";
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-      <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-1 ${isActive('/')}`}>
-        <HomeIcon size={24} />
-        <span className="text-[10px] font-medium">Home</span>
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center h-16 pb-safe z-50">
+      <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-0.5 p-2 ${isActive('/')}`}>
+        <HomeIcon size={22} />
       </button>
       
-      <button onClick={() => navigate('/new')} className="bg-blue-600 text-white p-3 rounded-full -mt-8 shadow-lg border-4 border-gray-50 active:scale-95 transition-transform">
+      <button onClick={onOpenCmd} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900">
+        <Search size={22} />
+      </button>
+
+      {/* Floating Action Button (FAB) Style Center */}
+      <button 
+        onClick={() => navigate('/new')} 
+        className="mb-8 bg-blue-600 text-white p-3.5 rounded-full shadow-lg shadow-blue-200 active:scale-95 transition-transform"
+      >
         <Plus size={24} />
       </button>
       
-      <button onClick={refreshNotes} className="flex flex-col items-center gap-1 text-gray-400 active:text-blue-600 transition-colors">
-        <Book size={24} />
-        <span className="text-[10px] font-medium">Sync</span>
+      <button onClick={() => navigate('/')} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900">
+        <Folder size={22} />
+      </button>
+      
+      <button onClick={refreshNotes} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900 active:animate-spin">
+        <Clock size={22} />
       </button>
     </div>
   );
 }
 
-function Home({ notes, refreshNotes }) {
+// Timeline View Home
+function Home({ notes, onOpenCmd }) {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [view, setView] = useState('list'); // 'list' or 'grid'
-
-  // Fuse.js Search
-  const fuse = useMemo(() => new Fuse(notes, {
-    keys: ['title', 'tags', 'excerpt'],
-    threshold: 0.3,
-  }), [notes]);
-
-  const results = useMemo(() => {
-    if (!query) return notes;
-    return fuse.search(query).map(r => r.item);
-  }, [query, notes, fuse]);
+  
+  // Group notes by time
+  const timeline = useMemo(() => {
+    const groups = { Today: [], Yesterday: [], ThisWeek: [], Older: [] };
+    
+    notes.forEach(note => {
+        const date = parseISO(note.created_at);
+        if (isToday(date)) groups.Today.push(note);
+        else if (isYesterday(date)) groups.Yesterday.push(note);
+        else if (isThisWeek(date)) groups.ThisWeek.push(note);
+        else groups.Older.push(note);
+    });
+    
+    return groups;
+  }, [notes]);
 
   return (
-    <div className="p-4 md:p-8 pb-24 max-w-5xl mx-auto">
-       <div className="flex justify-between items-center mb-6">
-         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-         <div className="flex gap-2">
-            <button onClick={() => setView('list')} className={cn("p-2 rounded", view === 'list' ? "bg-gray-200" : "hover:bg-gray-100")}>
-                <ListIcon size={20} />
-            </button>
-            <button onClick={() => setView('grid')} className={cn("p-2 rounded", view === 'grid' ? "bg-gray-200" : "hover:bg-gray-100")}>
-                <LayoutGrid size={20} />
-            </button>
+    <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
+       {/* Mobile Header */}
+       <div className="flex justify-between items-center mb-8 md:hidden">
+         <h1 className="text-2xl font-bold text-gray-900">Stream</h1>
+         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
+            ME
          </div>
        </div>
 
-       {/* Search Bar */}
-       <div className="relative mb-6">
-         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-         <input 
-            type="text" 
-            placeholder="Search notes, tags..." 
-            className="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-         />
+       {/* Desktop Search Trigger */}
+       <div 
+         onClick={onOpenCmd}
+         className="hidden md:flex items-center gap-3 p-4 mb-8 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:border-blue-400 transition-colors group"
+       >
+         <Search className="text-gray-400 group-hover:text-blue-500" />
+         <span className="text-gray-400 text-lg font-light">What's on your mind?</span>
        </div>
 
-       {/* Results */}
-       <div className={cn("grid gap-4", view === 'grid' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1")}>
-        {results.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-400">
-            <Book size={48} className="mx-auto mb-4 opacity-20" />
-            <p>No notes found.</p>
-          </div>
-        ) : (
-          results.map(note => (
-            <div 
-              key={note.id} 
-              onClick={() => navigate(`/note/${note.id}`)}
-              className={cn(
-                  "bg-white border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all cursor-pointer group active:scale-[0.99]",
-                  view === 'grid' ? "rounded-xl p-5 flex flex-col h-48" : "rounded-lg p-4 flex items-center gap-4"
-              )}
-            >
-              <div className="flex-1 min-w-0">
-                <div className="font-bold text-gray-800 mb-1 truncate group-hover:text-blue-600 transition-colors">
-                    {note.title || "Untitled"}
-                </div>
-                
-                {view === 'grid' && (
-                    <p className="text-sm text-gray-500 line-clamp-3 mb-3 flex-1">
-                        {note.excerpt || "No preview available..."}
-                    </p>
-                )}
-
-                <div className="flex items-center gap-3 text-xs text-gray-400 mt-auto">
-                    <div className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {new Date(note.created_at).toLocaleDateString()}
+       {/* Timeline */}
+       <div className="space-y-8">
+         {Object.entries(timeline).map(([label, group]) => (
+            group.length > 0 && (
+                <div key={label} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">{label}</h2>
+                    <div className="space-y-3">
+                        {group.map(note => (
+                            <TimelineCard key={note.id} note={note} onClick={() => navigate(`/note/${note.id}`)} />
+                        ))}
                     </div>
-                    {note.tags && note.tags.slice(0, 2).map(tag => (
-                        <span key={tag} className="flex items-center gap-1 bg-gray-50 px-1.5 py-0.5 rounded text-gray-500">
-                            <Hash size={10} /> {tag}
-                        </span>
-                    ))}
                 </div>
-              </div>
+            )
+         ))}
+         
+         {notes.length === 0 && (
+            <div className="text-center py-20 text-gray-400">
+                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Book size={32} className="opacity-20" />
+                </div>
+                <p>No thoughts yet.</p>
+                <button onClick={onOpenCmd} className="text-blue-500 text-sm mt-2 hover:underline">Start writing</button>
             </div>
-          ))
-        )}
+         )}
        </div>
     </div>
   );
 }
 
+function TimelineCard({ note, onClick }) {
+    // Determine icon based on tags/title
+    const isReport = note.tags?.some(t => ['report', 'research', 'deep-dive'].includes(t)) || note.title.includes('Report');
+    const isJob = note.tags?.some(t => ['career', 'job', 'resume'].includes(t));
+    
+    return (
+        <div 
+            onClick={onClick}
+            className="group relative bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-blue-100 hover:-translate-y-0.5 transition-all cursor-pointer"
+        >
+            <div className="flex justify-between items-start mb-2">
+                <div className="flex gap-2 items-center">
+                    {isReport ? <span className="text-purple-500 bg-purple-50 p-1 rounded text-xs font-bold">REPORT</span> :
+                     isJob ? <span className="text-green-600 bg-green-50 p-1 rounded text-xs font-bold">CAREER</span> : null}
+                    <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                        {note.title || "Untitled"}
+                    </h3>
+                </div>
+                <span className="text-[10px] text-gray-400 font-mono">
+                    {format(parseISO(note.created_at), 'HH:mm')}
+                </span>
+            </div>
+            
+            <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
+                {note.excerpt || "No preview content available..."}
+            </p>
+
+            <div className="flex items-center gap-2">
+                {note.tags && note.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+                        #{tag}
+                    </span>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+// ... (NoteViewer and NoteEditor remain largely similar, just ensure they use new UI style if needed)
 function NoteViewer({ service, notes }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -345,14 +462,9 @@ function NoteViewer({ service, notes }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Optimistic Load from Index (Title Only)
-  const cachedEntry = useMemo(() => notes.find(n => n.id === id), [notes, id]);
-
   useEffect(() => {
     setLoading(true);
     setError(null);
-    
-    // Always fetch fresh content
     service.getNotesIndex().then(index => {
       const entry = index.find(n => n.id === id);
       if (entry) {
@@ -386,64 +498,46 @@ function NoteViewer({ service, notes }) {
   if (!note) return <div className="p-8 text-center">Note not found.</div>;
 
   return (
-    <div className="max-w-4xl mx-auto bg-white min-h-screen pb-24 shadow-sm">
-      {/* Header */}
-      <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-gray-100 z-10 px-4 py-4 md:px-8">
-        <div className="flex justify-between items-start gap-4">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">{note.title}</h1>
-                <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
-                        {new Date(note.created_at).toLocaleDateString()}
-                    </span>
-                    {note.tags && note.tags.map(t => (
-                        <span key={t} className="text-gray-400">#{t}</span>
-                    ))}
-                </div>
-            </div>
-            <button 
-                onClick={() => navigate(`/edit/${id}`)}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-600"
-            >
-                <FileText size={20} />
-            </button>
+    <div className="max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100">
+      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
+            <ArrowRight className="rotate-180" size={20} />
+        </button>
+        <div className="flex gap-2">
+            <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm">Edit</button>
         </div>
       </div>
 
-      {/* Content */}
-      <article className="prose prose-blue prose-lg max-w-none px-4 py-8 md:px-8">
-        {note.content.split('\n').map((line, i) => {
-            // ... (Simple Markdown Render Logic) ...
-            if (line.startsWith('# ')) return null; // Skip H1 as it's in header
-            if (line.startsWith('## ')) return <h2 key={i} className="text-xl font-bold mt-8 mb-4 text-gray-800">{line.replace('## ', '')}</h2>;
-            if (line.startsWith('### ')) return <h3 key={i} className="text-lg font-bold mt-6 mb-3 text-gray-700">{line.replace('### ', '')}</h3>;
-            if (line.startsWith('- ')) return <li key={i} className="ml-4 list-disc marker:text-gray-300">{line.replace('- ', '')}</li>;
-            if (line.trim() === '---') return <hr key={i} className="my-8 border-gray-100" />;
-            
-            // Image handling
-            const imgMatch = line.match(/!\[(.*?)\]\((.*?)\)/);
-            if (imgMatch) {
-                return (
-                    <div key={i} className="my-6">
-                        <img src={imgMatch[2]} alt={imgMatch[1]} className="rounded-xl border border-gray-100 shadow-sm w-full" />
-                        {imgMatch[1] && <p className="text-center text-sm text-gray-400 mt-2">{imgMatch[1]}</p>}
-                    </div>
-                );
-            }
-            
-            // Table handling (basic)
-            if (line.includes('|')) return <div key={i} className="overflow-x-auto my-4"><pre className="font-mono text-xs bg-gray-50 p-3 rounded-lg border border-gray-100">{line}</pre></div>;
-            
-            if (!line.trim()) return <div key={i} className="h-2"></div>;
-            return <p key={i} className="mb-3 text-gray-600 leading-relaxed">{line}</p>;
-        })}
-      </article>
+      <div className="px-6 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
+        <div className="flex flex-wrap gap-2 mb-8">
+            {note.tags && note.tags.map(t => (
+                <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
+            ))}
+            <span className="text-xs text-gray-400 py-1 ml-auto">
+                {new Date(note.created_at).toLocaleString()}
+            </span>
+        </div>
+
+        <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
+            {note.content.split('\n').map((line, i) => {
+                if (line.startsWith('# ')) return null; 
+                // Enhanced rendering logic
+                if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
+                if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
+                
+                // Code blocks (simple detection)
+                if (line.startsWith('```')) return null; // Skip fence for now, simple implementation
+                
+                return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
+            })}
+        </article>
+      </div>
     </div>
   );
 }
 
 function NoteEditor({ service, refreshNotes }) {
-    // ... (Keep existing Editor logic, just update styling) ...
     const { id } = useParams();
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
@@ -480,49 +574,50 @@ function NoteEditor({ service, refreshNotes }) {
 
         await service.saveNote(noteData);
         setSaving(false);
-        refreshNotes(); // Trigger refresh
+        refreshNotes();
         navigate(`/note/${noteId}`);
     };
 
     return (
-        <div className="flex flex-col h-full bg-white">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-20">
-                <button onClick={() => navigate(-1)} className="text-gray-500">Cancel</button>
-                <span className="font-bold text-gray-700">{id ? 'Edit Note' : 'New Note'}</span>
-                <button 
-                    disabled={saving}
-                    onClick={handleSave}
-                    className="bg-black text-white px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                >
-                    {saving && <Loader2 className="animate-spin w-3 h-3" />}
-                    Save
-                </button>
-            </div>
-            
-            <div className="flex-1 overflow-auto p-4 md:p-8 max-w-3xl mx-auto w-full">
-                <input 
-                    className="w-full text-3xl md:text-4xl font-bold mb-4 outline-none placeholder:text-gray-300" 
-                    placeholder="Title"
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                />
+        <div className="flex flex-col h-full bg-white md:bg-gray-50/50">
+            <div className="md:max-w-3xl md:mx-auto md:my-8 md:bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 w-full h-full flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
+                    <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-900">Cancel</button>
+                    <button 
+                        disabled={saving}
+                        onClick={handleSave}
+                        className="bg-black text-white px-5 py-2 rounded-full text-sm font-bold shadow-md shadow-gray-200 flex items-center gap-2 disabled:opacity-50 hover:bg-gray-800 transition-all"
+                    >
+                        {saving && <Loader2 className="animate-spin w-3 h-3" />}
+                        Save
+                    </button>
+                </div>
                 
-                <div className="flex items-center gap-2 text-gray-400 mb-6 border-b border-gray-50 pb-4">
-                    <Tag size={16} />
+                <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white">
                     <input 
-                        className="flex-1 outline-none text-sm placeholder:text-gray-300" 
-                        placeholder="Tags (e.g. work, idea)"
-                        value={tags}
-                        onChange={e => setTags(e.target.value)}
+                        className="w-full text-3xl md:text-4xl font-bold mb-6 outline-none placeholder:text-gray-200" 
+                        placeholder="Title"
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                    />
+                    
+                    <div className="flex items-center gap-3 text-gray-400 mb-8 border-b border-gray-50 pb-4">
+                        <Tag size={18} />
+                        <input 
+                            className="flex-1 outline-none text-base placeholder:text-gray-300" 
+                            placeholder="Tags (comma separated)"
+                            value={tags}
+                            onChange={e => setTags(e.target.value)}
+                        />
+                    </div>
+
+                    <textarea 
+                        className="w-full h-[calc(100%-200px)] resize-none outline-none text-lg leading-relaxed text-gray-700 placeholder:text-gray-200 font-serif"
+                        placeholder="Start writing..."
+                        value={content}
+                        onChange={e => setContent(e.target.value)}
                     />
                 </div>
-
-                <textarea 
-                    className="w-full h-[calc(100vh-300px)] resize-none outline-none text-lg leading-relaxed text-gray-600 placeholder:text-gray-200"
-                    placeholder="Start writing..."
-                    value={content}
-                    onChange={e => setContent(e.target.value)}
-                />
             </div>
         </div>
     );
