@@ -247,7 +247,11 @@ function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
   const recentNotes = useMemo(() => safeNotes.slice(0, 5), [safeNotes]);
   const tags = useMemo(() => {
       const counts = {};
-      safeNotes.forEach(n => n.tags?.forEach(t => counts[t] = (counts[t] || 0) + 1));
+      safeNotes.forEach(n => {
+          if (Array.isArray(n.tags)) {
+              n.tags.forEach(t => counts[t] = (counts[t] || 0) + 1);
+          }
+      });
       return Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
   }, [safeNotes]);
 
@@ -447,8 +451,9 @@ function Home({ notes, onOpenCmd }) {
 
 function TimelineCard({ note, onClick }) {
     // Determine icon based on tags/title
-    const isReport = note.tags?.some(t => ['report', 'research', 'deep-dive'].includes(t)) || (note.title || '').includes('Report');
-    const isJob = note.tags?.some(t => ['career', 'job', 'resume'].includes(t));
+    const safeTags = Array.isArray(note.tags) ? note.tags : [];
+    const isReport = safeTags.some(t => ['report', 'research', 'deep-dive'].includes(t)) || (note.title || '').includes('Report');
+    const isJob = safeTags.some(t => ['career', 'job', 'resume'].includes(t));
     const safeDate = note.created_at ? new Date(note.created_at) : new Date();
     const timeStr = isValid(safeDate) ? format(safeDate, 'HH:mm') : '--:--';
     
@@ -475,7 +480,7 @@ function TimelineCard({ note, onClick }) {
             </p>
 
             <div className="flex items-center gap-2">
-                {note.tags && note.tags.slice(0, 3).map(tag => (
+                {safeTags.slice(0, 3).map(tag => (
                     <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
                         #{tag}
                     </span>
@@ -543,7 +548,7 @@ function NoteViewer({ service, notes }) {
       <div className="px-6 py-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
         <div className="flex flex-wrap gap-2 mb-8">
-            {note.tags && note.tags.map(t => (
+            {Array.isArray(note.tags) && note.tags.map(t => (
                 <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
             ))}
             <span className="text-xs text-gray-400 py-1 ml-auto">
@@ -585,7 +590,7 @@ function NoteEditor({ service, refreshNotes }) {
                     service.getNote(entry.path).then(n => {
                         setTitle(n.title);
                         setContent(n.content);
-                        setTags(n.tags ? n.tags.join(', ') : '');
+                        setTags(Array.isArray(n.tags) ? n.tags.join(', ') : '');
                     });
                 }
              });
