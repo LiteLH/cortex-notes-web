@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubService } from './lib/github';
 import { 
@@ -15,6 +15,48 @@ import { Command as CommandPrimitive } from 'cmdk';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
+}
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Uncaught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+          <div className="bg-white p-8 rounded-xl shadow-xl max-w-lg w-full text-center border border-red-100">
+            <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+            <p className="text-gray-500 mb-6">The application encountered an unexpected error.</p>
+            <div className="bg-gray-50 p-4 rounded text-left text-xs font-mono text-red-600 overflow-auto max-h-40 mb-6 border border-gray-200">
+              {this.state.error && this.state.error.toString()}
+            </div>
+            <button 
+              onClick={() => window.location.href = '/cortex-notes-web/'} 
+              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition w-full"
+            >
+              Reload Application
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 // ... (AuthScreen remains same) ...
@@ -165,12 +207,14 @@ function App() {
             className="hidden md:flex" 
         />
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
-          <Routes>
-            <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
-            <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} />} />
-            <Route path="/new" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
-            <Route path="/edit/:id" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
-          </Routes>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
+              <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} />} />
+              <Route path="/new" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
+              <Route path="/edit/:id" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
+            </Routes>
+          </ErrorBoundary>
         </main>
         <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
         
@@ -380,7 +424,7 @@ function Home({ notes, onOpenCmd }) {
     
     safeNotes.forEach(note => {
         try {
-            const date = parseISO(note.created_at);
+            const date = parseISO(note.created_at || '');
             if (!isValid(date)) {
                 groups.Older.push(note); // Fallback for invalid dates
                 return;
@@ -551,7 +595,7 @@ function NoteViewer({ service, notes }) {
         </div>
 
         <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
-            {note.content.split('\n').map((line, i) => {
+            {(note.content || '').split('\n').map((line, i) => {
                 if (line.startsWith('# ')) return null; 
                 // Enhanced rendering logic
                 if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
