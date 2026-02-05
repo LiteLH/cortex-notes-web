@@ -114,66 +114,14 @@ export class GitHubService {
         sha: sha
     });
 
-    // 5. Update Index (Robustly with Retry)
-    try {
-        // Wait 1s to allow GitHub to release git lock / propagate changes
-        await new Promise(r => setTimeout(r, 1000));
-        await this.updateIndex({
-            id: note.id,
-            title: note.title,
-            tags: note.tags || [],
-            created_at: note.created_at,
-            status: note.status || 'active',
-            path: path,
-            excerpt: note.content.slice(0, 100) + "..."
-        });
-    } catch (e) {
-        console.error("Index update failed, retrying once...", e);
-        try {
-            await new Promise(r => setTimeout(r, 2000)); // Wait 2s more
-            await this.updateIndex({
-                id: note.id,
-                title: note.title,
-                tags: note.tags || [],
-                created_at: note.created_at,
-                status: note.status || 'active',
-                path: path,
-                excerpt: note.content.slice(0, 100) + "..."
-            });
-        } catch (retryError) {
-             throw new Error(`Note saved, but index update failed after retry: ${retryError.message}`);
-        }
-    }
+    // 5. Update Index (DEPRECATED: Handled by GitHub Actions)
+    // We optimistically return success. The backend action will update index.json in ~30s.
+    // In a full implementation, we might update a local-only cache here.
+    console.log("Note saved. Index update delegated to GitHub Action.");
 
     return { success: true, path };
   }
 
-  async updateIndex(entry) {
-    // Always fetch FRESH index to avoid SHA conflict
-    let index = [];
-    let sha = undefined;
+  // updateIndex removed - moved to backend action
 
-    try {
-        const indexFile = await this.getFileContent(INDEX_PATH);
-        index = JSON.parse(indexFile.content);
-        sha = indexFile.sha;
-    } catch (e) { 
-        console.warn("Index not found, creating new one."); 
-    }
-
-    // Remove old entry if exists (deduplicate)
-    index = index.filter(i => i.id !== entry.id);
-    // Add new entry to top
-    index.unshift(entry);
-
-    // Save Index
-    await this.octokit.rest.repos.createOrUpdateFileContents({
-        owner: DB_REPO_OWNER,
-        repo: DB_REPO_NAME,
-        path: INDEX_PATH,
-        message: `chore: update index for ${entry.title}`,
-        content: toBase64(JSON.stringify(index, null, 2)),
-        sha: sha
-    });
-  }
 }
