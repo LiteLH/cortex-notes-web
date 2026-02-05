@@ -114,8 +114,10 @@ export class GitHubService {
         sha: sha
     });
 
-    // 5. Update Index (Robustly)
+    // 5. Update Index (Robustly with Retry)
     try {
+        // Wait 1s to allow GitHub to release git lock / propagate changes
+        await new Promise(r => setTimeout(r, 1000));
         await this.updateIndex({
             id: note.id,
             title: note.title,
@@ -126,10 +128,21 @@ export class GitHubService {
             excerpt: note.content.slice(0, 100) + "..."
         });
     } catch (e) {
-        console.error("Index update failed, but file saved:", e);
-        // We throw here so UI knows something went wrong, 
-        // even if the note file itself is safe.
-        throw new Error(`Note saved, but index update failed: ${e.message}`);
+        console.error("Index update failed, retrying once...", e);
+        try {
+            await new Promise(r => setTimeout(r, 2000)); // Wait 2s more
+            await this.updateIndex({
+                id: note.id,
+                title: note.title,
+                tags: note.tags || [],
+                created_at: note.created_at,
+                status: note.status || 'active',
+                path: path,
+                excerpt: note.content.slice(0, 100) + "..."
+            });
+        } catch (retryError) {
+             throw new Error(`Note saved, but index update failed after retry: ${retryError.message}`);
+        }
     }
 
     return { success: true, path };
