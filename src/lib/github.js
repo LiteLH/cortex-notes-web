@@ -115,8 +115,7 @@ export class GitHubService {
     });
 
     // 5. Update Index (DEPRECATED: Handled by GitHub Actions)
-    // We optimistically return success. The backend action will update index.json in ~30s.
-    // In a full implementation, we might update a local-only cache here.
+    // No waiting needed. The backend action will pick it up.
     console.log("Note saved. Index update delegated to GitHub Action.");
 
     return { success: true, path };
@@ -124,19 +123,20 @@ export class GitHubService {
 
   // updateIndex removed - moved to backend action
 
-  async deleteNote(id, path) {
+  async deleteNote(id, path, sha) {
       if (!path) {
           // Try to guess path - assume created this year if unknown
           path = `content/${new Date().getFullYear()}/${id}.md`;
       }
       
-      let sha = undefined;
-      try {
-          const file = await this.getFileContent(path);
-          sha = file.sha;
-      } catch (e) {
-          console.error("Delete failed: file not found", e);
-          throw new Error("Note file not found, cannot delete.");
+      if (!sha) {
+          try {
+              const file = await this.getFileContent(path);
+              sha = file.sha;
+          } catch (e) {
+              console.error("Delete failed: file not found", e);
+              throw new Error("Note file not found, cannot delete.");
+          }
       }
 
       await this.octokit.rest.repos.deleteFile({
