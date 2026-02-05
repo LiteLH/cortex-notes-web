@@ -114,21 +114,29 @@ export class GitHubService {
         sha: sha
     });
 
-    // 5. Update Index
-    await this.updateIndex({
-        id: note.id,
-        title: note.title,
-        tags: note.tags || [],
-        created_at: note.created_at,
-        status: note.status || 'active',
-        path: path,
-        excerpt: note.content.slice(0, 100) + "..."
-    });
+    // 5. Update Index (Robustly)
+    try {
+        await this.updateIndex({
+            id: note.id,
+            title: note.title,
+            tags: note.tags || [],
+            created_at: note.created_at,
+            status: note.status || 'active',
+            path: path,
+            excerpt: note.content.slice(0, 100) + "..."
+        });
+    } catch (e) {
+        console.error("Index update failed, but file saved:", e);
+        // We throw here so UI knows something went wrong, 
+        // even if the note file itself is safe.
+        throw new Error(`Note saved, but index update failed: ${e.message}`);
+    }
 
     return { success: true, path };
   }
 
   async updateIndex(entry) {
+    // Always fetch FRESH index to avoid SHA conflict
     let index = [];
     let sha = undefined;
 
@@ -136,11 +144,13 @@ export class GitHubService {
         const indexFile = await this.getFileContent(INDEX_PATH);
         index = JSON.parse(indexFile.content);
         sha = indexFile.sha;
-    } catch (e) { /* ignore */ }
+    } catch (e) { 
+        console.warn("Index not found, creating new one."); 
+    }
 
-    // Remove old entry if exists
+    // Remove old entry if exists (deduplicate)
     index = index.filter(i => i.id !== entry.id);
-    // Add new entry
+    // Add new entry to top
     index.unshift(entry);
 
     // Save Index

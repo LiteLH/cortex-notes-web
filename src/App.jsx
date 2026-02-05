@@ -600,19 +600,25 @@ function NoteEditor({ service, refreshNotes }) {
     const handleSave = async () => {
         if (!title.trim()) return alert("Title is required");
         setSaving(true);
-        const noteId = id || crypto.randomUUID();
-        const noteData = {
-            id: noteId,
-            title,
-            content,
-            tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-            created_at: new Date().toISOString(),
-        };
+        try {
+            const noteId = id || crypto.randomUUID();
+            const noteData = {
+                id: noteId,
+                title,
+                content,
+                tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+                created_at: new Date().toISOString(),
+            };
 
-        await service.saveNote(noteData);
-        setSaving(false);
-        refreshNotes();
-        navigate(`/note/${noteId}`);
+            await service.saveNote(noteData);
+            refreshNotes();
+            navigate(`/note/${noteId}`);
+        } catch (e) {
+            console.error(e);
+            alert(`Failed to save: ${e.message}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
