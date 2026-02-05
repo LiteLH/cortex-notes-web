@@ -5,4 +5,14 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/cortex-notes-web/',
+  define: {
+    // Polyfill global for libraries like buffer/octokit
+    global: 'window',
+  },
+  resolve: {
+    alias: {
+      // Force buffer to use the installed package
+      buffer: 'buffer',
+    },
+  },
 })
