@@ -151,6 +151,13 @@ function App() {
     }
   };
 
+  const handleSaveNote = (newNote) => {
+      setNotes(prev => {
+          const filtered = prev.filter(n => n.id !== newNote.id);
+          return [newNote, ...filtered];
+      });
+  };
+
   if (!isAuthenticated) {
     return <AuthScreen onLogin={handleLogin} error={authError} />;
   }
@@ -168,8 +175,8 @@ function App() {
             <Routes>
               <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
               <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} />} />
-              <Route path="/new" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
-              <Route path="/edit/:id" element={<NoteEditor service={service} refreshNotes={refreshNotes} />} />
+              <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
+              <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
             </Routes>
         </main>
         <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
@@ -502,10 +509,22 @@ function NoteViewer({ service, notes }) {
     if (!service) return;
     setLoading(true);
     setError(null);
+
+    // 1. Try Local Prop (Optimistic)
+    const localNote = notes.find(n => n.id === id);
+    if (localNote && localNote.content) {
+        setNote(localNote);
+        setLoading(false);
+        // Continue to fetch fresh content in background if needed, but for now just show local
+        return;
+    }
+
     service.getNotesIndex().then(index => {
-      const entry = index.find(n => n.id === id);
+      const entry = index.find(n => n.id === id) || localNote;
+      
       if (entry) {
-        service.getNote(entry.path)
+        const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`;
+        service.getNote(path)
             .then(n => {
                 setNote(n);
                 setLoading(false);
@@ -516,14 +535,23 @@ function NoteViewer({ service, notes }) {
                 setLoading(false);
             });
       } else {
-        setError("Note not found in index.");
-        setLoading(false);
+        // Fallback: Blind Fetch by ID
+        const blindPath = `content/${new Date().getFullYear()}/${id}.md`;
+        service.getNote(blindPath)
+            .then(n => {
+                setNote(n);
+                setLoading(false);
+            })
+            .catch(() => {
+                setError("Note not found in index (and path guess failed).");
+                setLoading(false);
+            });
       }
     }).catch(err => {
         setError("Failed to load index.");
         setLoading(false);
     });
-  }, [id, service]);
+  }, [id, service, notes]);
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
   if (error) return (
@@ -574,7 +602,7 @@ function NoteViewer({ service, notes }) {
   );
 }
 
-function NoteEditor({ service, refreshNotes }) {
+function NoteEditor({ service, refreshNotes, onSave }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
@@ -611,6 +639,10 @@ function NoteEditor({ service, refreshNotes }) {
             };
 
             await service.saveNote(noteData);
+            
+            // Optimistic update
+            if (onSave) onSave(noteData);
+            
             refreshNotes();
             navigate(`/note/${noteId}`);
         } catch (e) {
