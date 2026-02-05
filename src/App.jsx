@@ -501,7 +501,6 @@ function TimelineCard({ note, onClick }) {
     )
 }
 
-// ... (NoteViewer and NoteEditor remain largely similar, just ensure they use new UI style if needed)
 function NoteViewer({ service, notes, onDelete }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -535,20 +534,22 @@ function NoteViewer({ service, notes, onDelete }) {
                 setLoading(false);
             })
             .catch(err => {
-                console.error("Failed to load note:", err);
-                setError(err.message || "Failed to load note content.");
+                console.warn("Standard fetch failed, trying direct content fetch...", err);
+                // Try fallback strategies or show error
+                setError("Note content not found (yet). It might be indexing.");
                 setLoading(false);
             });
       } else {
-        // Fallback: Blind Fetch by ID
-        const blindPath = `content/${new Date().getFullYear()}/${id}.md`;
+        // Strategy 3: Blind Fetch (If not in index and not in local)
+        const year = new Date().getFullYear();
+        const blindPath = `content/${year}/${id}.md`;
         service.getNote(blindPath)
             .then(n => {
                 setNote(n);
                 setLoading(false);
             })
             .catch(() => {
-                setError("Note not found in index (and path guess failed).");
+                setError("Note not found in index or storage.");
                 setLoading(false);
             });
       }
@@ -562,7 +563,7 @@ function NoteViewer({ service, notes, onDelete }) {
       if (!confirm("Are you sure you want to delete this note?")) return;
       setDeleting(true);
       try {
-          const path = note?.path; 
+          const path = note?.path || `content/${new Date().getFullYear()}/${id}.md`; 
           await service.deleteNote(id, path);
           if (onDelete) onDelete(id);
           navigate('/');
@@ -614,13 +615,9 @@ function NoteViewer({ service, notes, onDelete }) {
         <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
             {(note.content || '').split('\n').map((line, i) => {
                 if (line.startsWith('# ')) return null; 
-                // Enhanced rendering logic
                 if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
                 if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
-                
-                // Code blocks (simple detection)
-                if (line.startsWith('```')) return null; // Skip fence for now, simple implementation
-                
+                if (line.startsWith('```')) return null; 
                 return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
             })}
         </article>
@@ -663,14 +660,18 @@ function NoteEditor({ service, refreshNotes, onSave }) {
                 content,
                 tags: tags.split(',').map(t => t.trim()).filter(Boolean),
                 created_at: new Date().toISOString(),
+                path: `content/${new Date().getFullYear()}/${noteId}.md`
             };
 
             await service.saveNote(noteData);
             
-            // Optimistic update
+            // Optimistic Update Callback (Updates local state immediately)
             if (onSave) onSave(noteData);
             
-            refreshNotes();
+            // DO NOT refreshNotes() here! 
+            // It will fetch the stale index.json from server and overwrite our new note.
+            // refreshNotes(); 
+            
             navigate(`/note/${noteId}`);
         } catch (e) {
             console.error(e);
