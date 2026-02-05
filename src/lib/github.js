@@ -124,4 +124,30 @@ export class GitHubService {
 
   // updateIndex removed - moved to backend action
 
+  async deleteNote(id, path) {
+      if (!path) {
+          // Try to guess path - assume created this year if unknown
+          path = `content/${new Date().getFullYear()}/${id}.md`;
+      }
+      
+      let sha = undefined;
+      try {
+          const file = await this.getFileContent(path);
+          sha = file.sha;
+      } catch (e) {
+          console.error("Delete failed: file not found", e);
+          throw new Error("Note file not found, cannot delete.");
+      }
+
+      await this.octokit.rest.repos.deleteFile({
+          owner: DB_REPO_OWNER,
+          repo: DB_REPO_NAME,
+          path: path,
+          message: `chore: delete note ${id}`,
+          sha: sha
+      });
+      
+      console.log("Note deleted. Index update delegated to GitHub Action.");
+      return { success: true };
+  }
 }

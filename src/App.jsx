@@ -158,6 +158,10 @@ function App() {
       });
   };
 
+  const handleDeleteNote = (id) => {
+      setNotes(prev => prev.filter(n => n.id !== id));
+  };
+
   if (!isAuthenticated) {
     return <AuthScreen onLogin={handleLogin} error={authError} />;
   }
@@ -174,7 +178,7 @@ function App() {
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
             <Routes>
               <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
-              <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} />} />
+              <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
               <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
               <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
             </Routes>
@@ -498,12 +502,13 @@ function TimelineCard({ note, onClick }) {
 }
 
 // ... (NoteViewer and NoteEditor remain largely similar, just ensure they use new UI style if needed)
-function NoteViewer({ service, notes }) {
+function NoteViewer({ service, notes, onDelete }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!service) return;
@@ -553,6 +558,21 @@ function NoteViewer({ service, notes }) {
     });
   }, [id, service, notes]);
 
+  const handleDelete = async () => {
+      if (!confirm("Are you sure you want to delete this note?")) return;
+      setDeleting(true);
+      try {
+          const path = note?.path; 
+          await service.deleteNote(id, path);
+          if (onDelete) onDelete(id);
+          navigate('/');
+      } catch (e) {
+          alert(`Failed to delete: ${e.message}`);
+      } finally {
+          setDeleting(false);
+      }
+  };
+
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>;
   if (error) return (
     <div className="p-8 text-center">
@@ -569,7 +589,14 @@ function NoteViewer({ service, notes }) {
             <ArrowRight className="rotate-180" size={20} />
         </button>
         <div className="flex gap-2">
-            <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm">Edit</button>
+            <button 
+                onClick={handleDelete} 
+                disabled={deleting}
+                className="text-red-500 font-medium text-sm px-3 hover:bg-red-50 rounded disabled:opacity-50"
+            >
+                {deleting ? 'Deleting...' : 'Delete'}
+            </button>
+            <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">Edit</button>
         </div>
       </div>
 
