@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Timer } from 'lucide-react';
+import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Timer, Trash2, FileText, ExternalLink } from 'lucide-react';
 
 // Parse TASKS.md into structured data
 function parseTasksMd(content) {
@@ -53,8 +53,21 @@ function parseTasksMd(content) {
       currentTask = {
         timestamp: line.replace('### ', '').replace('✓', '').replace('✅', '').trim(),
         content: '',
+        report: null,
         isCompleted: line.includes('✓') || line.includes('✅')
       };
+      continue;
+    }
+    
+    // Extract report link (📄 報告：[xxx](yyy))
+    if (currentTask && line.includes('📄') && line.includes('報告')) {
+      const linkMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
+      if (linkMatch) {
+        currentTask.report = {
+          title: linkMatch[1],
+          path: linkMatch[2]
+        };
+      }
       continue;
     }
     
@@ -234,6 +247,68 @@ export function YachiyoTaskPanel({ service, compact = false }) {
     }
   };
 
+  // Delete a single task
+  const handleDeleteTask = async (taskToDelete, section) => {
+    if (!service) return;
+    
+    setSaving(true);
+    try {
+      const newTasks = {
+        ...tasks,
+        [section]: tasks[section].filter(t => t.timestamp !== taskToDelete.timestamp)
+      };
+      const content = formatTasksMd(newTasks);
+      
+      await service.octokit.rest.repos.createOrUpdateFileContents({
+        owner: 'LiteLH',
+        repo: 'cortex-notes-db',
+        path: TASKS_PATH,
+        message: `chore: 刪除任務 - ${taskToDelete.content.slice(0, 30)}...`,
+        content: Buffer.from(content).toString('base64'),
+        sha: sha
+      });
+      
+      await fetchTasks();
+    } catch (e) {
+      setError('刪除失敗，請重試');
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Clear all completed tasks
+  const handleClearCompleted = async () => {
+    if (!service || tasks.completed.length === 0) return;
+    
+    if (!confirm('確定要清除所有已完成的任務嗎？')) return;
+    
+    setSaving(true);
+    try {
+      const newTasks = {
+        ...tasks,
+        completed: []
+      };
+      const content = formatTasksMd(newTasks);
+      
+      await service.octokit.rest.repos.createOrUpdateFileContents({
+        owner: 'LiteLH',
+        repo: 'cortex-notes-db',
+        path: TASKS_PATH,
+        message: `chore: 清除所有已完成任務`,
+        content: Buffer.from(content).toString('base64'),
+        sha: sha
+      });
+      
+      await fetchTasks();
+    } catch (e) {
+      setError('清除失敗，請重試');
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Stats
   const pendingCount = tasks.pending.length + tasks.inProgress.length;
   const completedCount = tasks.completed.length;
@@ -355,18 +430,35 @@ export function YachiyoTaskPanel({ service, compact = false }) {
       {/* Completed (collapsible) */}
       {tasks.completed.length > 0 && (
         <div className="px-4 pb-4">
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-2 flex items-center gap-2 hover:text-green-700"
-          >
-            <CheckCircle size={12} />
-            已完成 ({tasks.completed.length})
-            {showCompleted ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </button>
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="text-xs font-semibold text-green-600 uppercase tracking-wider flex items-center gap-2 hover:text-green-700"
+            >
+              <CheckCircle size={12} />
+              已完成 ({tasks.completed.length})
+              {showCompleted ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {showCompleted && tasks.completed.length > 0 && (
+              <button
+                onClick={() => handleClearCompleted()}
+                className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1"
+                title="清除所有已完成任務"
+              >
+                <Trash2 size={12} />
+                清除全部
+              </button>
+            )}
+          </div>
           {showCompleted && (
             <div className="space-y-2">
-              {tasks.completed.slice(0, 5).map((task, i) => (
-                <TaskCard key={i} task={task} status="completed" />
+              {tasks.completed.map((task, i) => (
+                <TaskCard 
+                  key={i} 
+                  task={task} 
+                  status="completed" 
+                  onDelete={() => handleDeleteTask(task, 'completed')}
+                />
               ))}
             </div>
           )}
@@ -392,17 +484,52 @@ export function YachiyoTaskPanel({ service, compact = false }) {
   );
 }
 
-function TaskCard({ task, status }) {
+function TaskCard({ task, status, onDelete }) {
   const statusStyles = {
     pending: 'bg-white border-gray-200',
     inProgress: 'bg-amber-50 border-amber-200',
-    completed: 'bg-green-50 border-green-200 opacity-75'
+    completed: 'bg-green-50 border-green-200'
   };
 
+  // Clean up content (remove strikethrough markers)
+  const cleanContent = task.content
+    .replace(/~~/g, '')
+    .replace(/✅.*$/gm, '')
+    .trim();
+
   return (
-    <div className={`p-3 rounded-lg border ${statusStyles[status]} text-sm`}>
-      <div className="text-xs text-gray-400 mb-1">{task.timestamp}</div>
-      <div className="text-gray-700 whitespace-pre-wrap">{task.content}</div>
+    <div className={`p-3 rounded-lg border ${statusStyles[status]} text-sm group relative`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1">
+          <div className="text-xs text-gray-400 mb-1">{task.timestamp}</div>
+          <div className="text-gray-700 whitespace-pre-wrap">{cleanContent}</div>
+          
+          {/* Report link for completed tasks */}
+          {status === 'completed' && task.report && (
+            <a 
+              href={`https://github.com/LiteLH/cortex-notes-db/blob/main/yachiyo/${task.report.path}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded"
+            >
+              <FileText size={12} />
+              {task.report.title}
+              <ExternalLink size={10} />
+            </a>
+          )}
+        </div>
+        
+        {/* Delete button (visible on hover for completed) */}
+        {status === 'completed' && onDelete && (
+          <button
+            onClick={onDelete}
+            className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+            title="刪除此任務"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
