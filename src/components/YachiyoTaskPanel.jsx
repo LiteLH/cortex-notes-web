@@ -73,11 +73,21 @@ function parseTasksMd(content) {
     // Extract response (starts with ✅)
     if (currentTask && (line.startsWith('✅') || line.includes('✅'))) {
       currentTask.response = line.replace('✅', '').trim();
+      currentTask._inResponse = true; // Flag to continue accumulating response
+      continue;
+    }
+    
+    // Continue accumulating response content (after ✅ line, before 📄)
+    if (currentTask && currentTask._inResponse && currentSection === 'completed' && !line.includes('📄')) {
+      if (line.trim()) {
+        currentTask.response += '\n' + line.trim();
+      }
       continue;
     }
     
     // Extract report link (📄 報告：[xxx](yyy))
     if (currentTask && line.includes('📄') && line.includes('報告')) {
+      currentTask._inResponse = false; // Stop accumulating response
       const linkMatch = line.match(/\[([^\]]+)\]\(([^)]+)\)/);
       if (linkMatch) {
         currentTask.report = {
@@ -590,7 +600,7 @@ function TaskCard({ task, status, onDelete, service }) {
                 <Moon size={12} />
                 八千代回覆
               </div>
-              <div className="text-gray-700 text-sm">{task.response}</div>
+              <div className="text-gray-700 text-sm whitespace-pre-wrap">{task.response}</div>
             </div>
           )}
           
