@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Timer, Trash2, FileText, ExternalLink } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Timer, Trash2, FileText } from 'lucide-react';
+import { Buffer } from 'buffer';
 
 // Parse TASKS.md into structured data
 function parseTasksMd(content) {
