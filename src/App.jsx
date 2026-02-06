@@ -381,6 +381,7 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path ? "text-blue-600" : "text-gray-400";
+  const isActivePrefix = (prefix) => location.pathname.startsWith(prefix) ? "text-blue-600" : "text-gray-400";
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center h-16 pb-safe z-50">
@@ -400,12 +401,14 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
         <Plus size={24} />
       </button>
       
-      <button onClick={() => navigate('/')} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900">
+      {/* Browse Categories */}
+      <button onClick={() => navigate('/browse')} className={`flex flex-col items-center gap-0.5 p-2 ${isActivePrefix('/browse')}`}>
         <Folder size={22} />
       </button>
       
-      <button onClick={refreshNotes} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900 active:animate-spin">
-        <Clock size={22} />
+      {/* Yachiyo Task Panel */}
+      <button onClick={() => navigate('/yachiyo')} className={`flex flex-col items-center gap-0.5 p-2 ${isActive('/yachiyo')}`}>
+        <Moon size={22} />
       </button>
     </div>
   );
