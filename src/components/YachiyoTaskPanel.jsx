@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Moon, Send, Loader2, CheckCircle, Clock, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Timer } from 'lucide-react';
 
 // Parse TASKS.md into structured data
 function parseTasksMd(content) {
@@ -128,8 +128,51 @@ export function YachiyoTaskPanel({ service, compact = false }) {
   const [sha, setSha] = useState(null);
   const [showCompleted, setShowCompleted] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [nextCheck, setNextCheck] = useState(null);
+  const [countdown, setCountdown] = useState('');
 
   const TASKS_PATH = 'yachiyo/TASKS.md';
+  const CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+  // Calculate next check time (approximate, based on 5-min intervals)
+  useEffect(() => {
+    const calculateNextCheck = () => {
+      const now = new Date();
+      const minutes = now.getMinutes();
+      const nextMinute = Math.ceil(minutes / 5) * 5;
+      const next = new Date(now);
+      next.setMinutes(nextMinute, 0, 0);
+      if (next <= now) {
+        next.setMinutes(next.getMinutes() + 5);
+      }
+      setNextCheck(next);
+    };
+
+    calculateNextCheck();
+    const interval = setInterval(calculateNextCheck, 30000); // Update every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!nextCheck) return;
+
+    const updateCountdown = () => {
+      const now = new Date();
+      const diff = nextCheck - now;
+      if (diff <= 0) {
+        setCountdown('即將檢查...');
+        return;
+      }
+      const mins = Math.floor(diff / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      setCountdown(`${mins}:${String(secs).padStart(2, '0')}`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [nextCheck]);
 
   // Fetch tasks
   const fetchTasks = async () => {
@@ -233,7 +276,13 @@ export function YachiyoTaskPanel({ service, compact = false }) {
         </div>
         <div className="flex-1">
           <h3 className="font-bold text-white">八千代任務欄</h3>
-          <p className="text-indigo-100 text-xs">每 5 分鐘自動檢查</p>
+          <div className="flex items-center gap-2 text-indigo-100 text-xs">
+            <Timer size={12} />
+            <span>下次檢查：{countdown || '計算中...'}</span>
+            {nextCheck && (
+              <span className="opacity-70">({nextCheck.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })})</span>
+            )}
+          </div>
         </div>
         <button 
           onClick={fetchTasks}
