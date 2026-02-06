@@ -21,7 +21,7 @@ function parseTasksMd(content) {
     // Detect section headers (must start with ##)
     if (line.startsWith('## ')) {
       // Save previous task before switching section
-      if (currentTask && currentSection && currentTask.content.trim()) {
+      if (currentTask && currentSection && (currentTask.originalTask || '').trim()) {
         sections[currentSection].push(currentTask);
         currentTask = null;
       }
@@ -294,7 +294,7 @@ export function YachiyoTaskPanel({ service, compact = false }) {
         owner: 'LiteLH',
         repo: 'cortex-notes-db',
         path: TASKS_PATH,
-        message: `chore: 刪除任務 - ${taskToDelete.content.slice(0, 30)}...`,
+        message: `chore: 刪除任務 - ${(taskToDelete.originalTask || '').slice(0, 30)}...`,
         content: Buffer.from(content).toString('base64'),
         sha: sha
       });
