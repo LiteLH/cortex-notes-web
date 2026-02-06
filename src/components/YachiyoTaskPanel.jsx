@@ -125,7 +125,8 @@ function formatTasksMd(sections, newTask = null) {
 
   // Add existing pending tasks
   sections.pending.forEach(task => {
-    content += `### ${task.timestamp}\n${task.content}\n\n`;
+    const taskContent = task.originalTask || task.content || '';
+    content += `### ${task.timestamp}\n${taskContent}\n\n`;
   });
 
   content += `---
@@ -135,7 +136,8 @@ function formatTasksMd(sections, newTask = null) {
 `;
 
   sections.inProgress.forEach(task => {
-    content += `### ${task.timestamp}\n${task.content}\n\n`;
+    const taskContent = task.originalTask || task.content || '';
+    content += `### ${task.timestamp}\n${taskContent}\n\n`;
   });
 
   content += `---
@@ -145,7 +147,10 @@ function formatTasksMd(sections, newTask = null) {
 `;
 
   sections.completed.forEach(task => {
-    content += `### ${task.timestamp} ✓\n${task.content}\n\n`;
+    const taskContent = task.originalTask || '';
+    const response = task.response ? `\n✅ ${task.response}` : '';
+    const report = task.report ? `\n📄 報告：[${task.report.title}](${task.report.path})` : '';
+    content += `### ${task.timestamp} ✓\n~~${taskContent}~~${response}${report}\n\n`;
   });
 
   return content;
