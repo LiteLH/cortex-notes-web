@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubService } from './lib/github';
+import { YachiyoTaskPanel } from './components/YachiyoTaskPanel';
 import { 
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
   LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
-  Command, Calendar, ArrowRight, Star
+  Command, Calendar, ArrowRight, Star, Moon
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { clsx } from 'clsx';
@@ -171,13 +172,15 @@ function App() {
       <div className="flex h-screen bg-gray-50 text-gray-900 font-sans flex-col md:flex-row overflow-hidden">
         <Sidebar 
             notes={notes} 
+            service={service}
             onLogout={handleLogout} 
             onOpenCmd={() => setOpenCmd(true)}
             className="hidden md:flex" 
         />
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
             <Routes>
-              <Route path="/" element={<Home notes={notes} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
+              <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
+              <Route path="/yachiyo" element={<YachiyoPage service={service} />} />
               <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
               <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
               <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
@@ -250,8 +253,9 @@ function CommandPalette({ open, onOpenChange, notes }) {
 }
 
 // Sidebar: "Smart Sections" instead of just folders
-function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
+function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const safeNotes = Array.isArray(notes) ? notes : [];
   
   // Smart Filters
@@ -265,6 +269,8 @@ function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
       });
       return Object.entries(counts).sort((a,b) => b[1] - a[1]).slice(0, 8);
   }, [safeNotes]);
+
+  const isActive = (path) => location.pathname === path;
 
   return (
     <div className={cn("w-64 bg-gray-50 border-r border-gray-200 flex flex-col h-full shrink-0", className)}>
@@ -291,8 +297,16 @@ function Sidebar({ notes, onLogout, onOpenCmd, className = "" }) {
         <div>
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Start</div>
             <div className="space-y-0.5">
-                <SidebarItem icon={HomeIcon} label="Home" active onClick={() => navigate('/')} />
+                <SidebarItem icon={HomeIcon} label="Home" active={isActive('/')} onClick={() => navigate('/')} />
                 <SidebarItem icon={Plus} label="New Note" onClick={() => navigate('/new')} />
+            </div>
+        </div>
+
+        {/* Section: Yachiyo */}
+        <div>
+            <div className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2 px-2">🌙 八千代</div>
+            <div className="space-y-0.5">
+                <SidebarItem icon={Moon} label="任務欄" active={isActive('/yachiyo')} onClick={() => navigate('/yachiyo')} />
             </div>
         </div>
 
@@ -384,8 +398,23 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
   );
 }
 
+// Yachiyo Task Page
+function YachiyoPage({ service }) {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 md:py-10 pb-24">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <span className="text-3xl">🌙</span> 八千代任務欄
+        </h1>
+        <p className="text-gray-500 text-sm mt-1">在這裡寫下任務，八千代會自動執行</p>
+      </div>
+      <YachiyoTaskPanel service={service} />
+    </div>
+  );
+}
+
 // Timeline View Home
-function Home({ notes, onOpenCmd }) {
+function Home({ notes, service, onOpenCmd }) {
   const navigate = useNavigate();
   const safeNotes = Array.isArray(notes) ? notes : [];
   
@@ -425,10 +454,27 @@ function Home({ notes, onOpenCmd }) {
        {/* Desktop Search Trigger */}
        <div 
          onClick={onOpenCmd}
-         className="hidden md:flex items-center gap-3 p-4 mb-8 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:border-blue-400 transition-colors group"
+         className="hidden md:flex items-center gap-3 p-4 mb-4 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:border-blue-400 transition-colors group"
        >
          <Search className="text-gray-400 group-hover:text-blue-500" />
          <span className="text-gray-400 text-lg font-light">What's on your mind?</span>
+       </div>
+
+       {/* Yachiyo Quick Card */}
+       <div 
+         onClick={() => navigate('/yachiyo')}
+         className="mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-indigo-200 transition-all group"
+       >
+         <div className="flex items-center gap-3">
+           <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+             <Moon size={20} className="text-white" />
+           </div>
+           <div className="flex-1">
+             <h3 className="font-bold text-white">🌙 八千代任務欄</h3>
+             <p className="text-indigo-100 text-sm">點擊寫任務，自動執行</p>
+           </div>
+           <ArrowRight className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+         </div>
        </div>
 
        {/* Timeline */}
