@@ -47,15 +47,31 @@ function parseTasksMd(content) {
     // Detect task headers (### timestamp)
     if (line.startsWith('### ')) {
       // Save previous task before starting new one
-      if (currentTask && currentSection && currentTask.content.trim()) {
+      if (currentTask && currentSection) {
         sections[currentSection].push(currentTask);
       }
       currentTask = {
         timestamp: line.replace('### ', '').replace('✓', '').replace('✅', '').trim(),
-        content: '',
+        originalTask: '',
+        response: '',
         report: null,
         isCompleted: line.includes('✓') || line.includes('✅')
       };
+      continue;
+    }
+    
+    // Extract original task (with strikethrough ~~xxx~~)
+    if (currentTask && line.includes('~~')) {
+      const match = line.match(/~~(.+?)~~/);
+      if (match) {
+        currentTask.originalTask = match[1];
+      }
+      continue;
+    }
+    
+    // Extract response (starts with ✅)
+    if (currentTask && (line.startsWith('✅') || line.includes('✅'))) {
+      currentTask.response = line.replace('✅', '').trim();
       continue;
     }
     
@@ -71,14 +87,17 @@ function parseTasksMd(content) {
       continue;
     }
     
-    // Accumulate task content (only if we're in a task)
+    // Accumulate other content
     if (currentTask && currentSection && line.trim() && !line.startsWith('<!--')) {
-      currentTask.content += (currentTask.content ? '\n' : '') + line.trim();
+      // For pending/inProgress, accumulate as content
+      if (currentSection !== 'completed') {
+        currentTask.originalTask += (currentTask.originalTask ? '\n' : '') + line.trim();
+      }
     }
   }
   
   // Don't forget the last task
-  if (currentTask && currentSection && currentTask.content.trim()) {
+  if (currentTask && currentSection) {
     sections[currentSection].push(currentTask);
   }
   
@@ -458,6 +477,7 @@ export function YachiyoTaskPanel({ service, compact = false }) {
                   task={task} 
                   status="completed" 
                   onDelete={() => handleDeleteTask(task, 'completed')}
+                  service={service}
                 />
               ))}
             </div>
@@ -484,52 +504,105 @@ export function YachiyoTaskPanel({ service, compact = false }) {
   );
 }
 
-function TaskCard({ task, status, onDelete }) {
+function TaskCard({ task, status, onDelete, service }) {
+  const [expanded, setExpanded] = useState(false);
+  const [reportContent, setReportContent] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+
   const statusStyles = {
     pending: 'bg-white border-gray-200',
     inProgress: 'bg-amber-50 border-amber-200',
     completed: 'bg-green-50 border-green-200'
   };
 
-  // Clean up content (remove strikethrough markers)
-  const cleanContent = task.content
-    .replace(/~~/g, '')
-    .replace(/✅.*$/gm, '')
-    .trim();
+  // Load report content when expanded
+  useEffect(() => {
+    if (expanded && task.report && !reportContent && service) {
+      setLoadingReport(true);
+      service.getFileContent(`yachiyo/${task.report.path}`)
+        .then(file => {
+          setReportContent(file.content);
+        })
+        .catch(e => {
+          console.error('Failed to load report:', e);
+          setReportContent('無法載入報告內容');
+        })
+        .finally(() => setLoadingReport(false));
+    }
+  }, [expanded, task.report, reportContent, service]);
+
+  // Determine what to display
+  const displayTask = task.originalTask || task.content || '';
+  const hasResponse = task.response || task.report;
 
   return (
-    <div className={`p-3 rounded-lg border ${statusStyles[status]} text-sm group relative`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1">
-          <div className="text-xs text-gray-400 mb-1">{task.timestamp}</div>
-          <div className="text-gray-700 whitespace-pre-wrap">{cleanContent}</div>
+    <div className={`rounded-lg border ${statusStyles[status]} text-sm overflow-hidden group`}>
+      {/* Header - always visible */}
+      <div 
+        className={`p-3 ${hasResponse && status === 'completed' ? 'cursor-pointer hover:bg-green-100/50' : ''}`}
+        onClick={() => hasResponse && status === 'completed' && setExpanded(!expanded)}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1">
+            <div className="text-xs text-gray-400 mb-1 flex items-center gap-2">
+              {task.timestamp}
+              {hasResponse && status === 'completed' && (
+                <span className="text-green-600">
+                  {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </span>
+              )}
+            </div>
+            <div className="text-gray-700">{displayTask}</div>
+          </div>
           
-          {/* Report link for completed tasks */}
-          {status === 'completed' && task.report && (
-            <a 
-              href={`https://github.com/LiteLH/cortex-notes-db/blob/main/yachiyo/${task.report.path}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded"
+          {/* Delete button */}
+          {status === 'completed' && onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+              title="刪除此任務"
             >
-              <FileText size={12} />
-              {task.report.title}
-              <ExternalLink size={10} />
-            </a>
+              <Trash2 size={14} />
+            </button>
           )}
         </div>
-        
-        {/* Delete button (visible on hover for completed) */}
-        {status === 'completed' && onDelete && (
-          <button
-            onClick={onDelete}
-            className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
-            title="刪除此任務"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
       </div>
+
+      {/* Expanded content - response and report */}
+      {expanded && status === 'completed' && (
+        <div className="border-t border-green-200 bg-green-50/50 p-3 space-y-3">
+          {/* Response */}
+          {task.response && (
+            <div className="bg-white rounded-lg p-3 border border-green-100">
+              <div className="text-xs text-green-600 font-semibold mb-1 flex items-center gap-1">
+                <Moon size={12} />
+                八千代回覆
+              </div>
+              <div className="text-gray-700 text-sm">{task.response}</div>
+            </div>
+          )}
+          
+          {/* Report content */}
+          {task.report && (
+            <div className="bg-white rounded-lg p-3 border border-indigo-100">
+              <div className="text-xs text-indigo-600 font-semibold mb-2 flex items-center gap-1">
+                <FileText size={12} />
+                {task.report.title}
+              </div>
+              {loadingReport ? (
+                <div className="flex items-center gap-2 text-gray-400 text-sm">
+                  <Loader2 size={14} className="animate-spin" />
+                  載入中...
+                </div>
+              ) : reportContent ? (
+                <div className="text-gray-600 text-sm whitespace-pre-wrap max-h-64 overflow-y-auto prose prose-sm">
+                  {reportContent}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
