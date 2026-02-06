@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubService } from './lib/github';
 import { YachiyoTaskPanel } from './components/YachiyoTaskPanel';
+import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
 import { 
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
   LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
-  Command, Calendar, ArrowRight, Star, Moon
+  Command, Calendar, ArrowRight, Star, Moon, FolderOpen
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { clsx } from 'clsx';
@@ -181,6 +182,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
               <Route path="/yachiyo" element={<YachiyoPage service={service} />} />
+              <Route path="/browse" element={<CategoryBrowser notes={notes} />} />
+              <Route path="/browse/:category" element={<CategoryBrowser notes={notes} />} />
+              <Route path="/browse/:category/:subcategory" element={<CategoryBrowser notes={notes} />} />
               <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
               <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
               <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
@@ -307,6 +311,15 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
             <div className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2 px-2">🌙 八千代</div>
             <div className="space-y-0.5">
                 <SidebarItem icon={Moon} label="任務欄" active={isActive('/yachiyo')} onClick={() => navigate('/yachiyo')} />
+            </div>
+        </div>
+
+        {/* Section: Browse */}
+        <div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">分類瀏覽</div>
+            <div className="space-y-0.5">
+                <SidebarItem icon={FolderOpen} label="所有分類" active={isActive('/browse')} onClick={() => navigate('/browse')} />
+                <CategoryNav notes={safeNotes} onNavigate={navigate} />
             </div>
         </div>
 
