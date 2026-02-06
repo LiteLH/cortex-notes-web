@@ -214,7 +214,11 @@ export function YachiyoTaskPanel({ service, compact = false }) {
 
   // Fetch tasks
   const fetchTasks = async () => {
-    if (!service) return;
+    if (!service) {
+      setError('請先登入 GitHub');
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -226,13 +230,15 @@ export function YachiyoTaskPanel({ service, compact = false }) {
       setSha(file.sha);
       setLastRefresh(new Date());
     } catch (e) {
-      if (e.status === 404) {
+      console.error('fetchTasks error:', e);
+      // Check for 404 in different error formats
+      const status = e.status || e.response?.status;
+      if (status === 404) {
         // File doesn't exist yet
         setTasks({ pending: [], inProgress: [], completed: [] });
         setSha(null);
       } else {
-        setError('無法載入任務欄');
-        console.error(e);
+        setError(`無法載入任務欄: ${e.message || '未知錯誤'}`);
       }
     } finally {
       setLoading(false);
