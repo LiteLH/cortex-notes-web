@@ -17,41 +17,55 @@ function parseTasksMd(content) {
   const lines = content.split('\n');
   
   for (const line of lines) {
-    // Detect section headers
-    if (line.includes('待處理') || line.includes('pending')) {
-      currentSection = 'pending';
-      continue;
+    // Detect section headers (must start with ##)
+    if (line.startsWith('## ')) {
+      // Save previous task before switching section
+      if (currentTask && currentSection && currentTask.content.trim()) {
+        sections[currentSection].push(currentTask);
+        currentTask = null;
+      }
+      
+      if (line.includes('待處理') || line.toLowerCase().includes('pending')) {
+        currentSection = 'pending';
+        continue;
+      }
+      if (line.includes('進行中') || line.toLowerCase().includes('progress')) {
+        currentSection = 'inProgress';
+        continue;
+      }
+      if (line.includes('已完成') || line.toLowerCase().includes('completed') || line.toLowerCase().includes('done')) {
+        currentSection = 'completed';
+        continue;
+      }
     }
-    if (line.includes('進行中') || line.includes('in_progress')) {
-      currentSection = 'inProgress';
-      continue;
-    }
-    if (line.includes('已完成') || line.includes('completed')) {
-      currentSection = 'completed';
+    
+    // Skip separators and empty content before task
+    if (line.startsWith('---') || line.startsWith('# ') || line.startsWith('> ')) {
       continue;
     }
     
     // Detect task headers (### timestamp)
     if (line.startsWith('### ')) {
-      if (currentTask && currentSection) {
+      // Save previous task before starting new one
+      if (currentTask && currentSection && currentTask.content.trim()) {
         sections[currentSection].push(currentTask);
       }
       currentTask = {
-        timestamp: line.replace('### ', '').trim(),
+        timestamp: line.replace('### ', '').replace('✓', '').replace('✅', '').trim(),
         content: '',
         isCompleted: line.includes('✓') || line.includes('✅')
       };
       continue;
     }
     
-    // Accumulate task content
-    if (currentTask && line.trim() && !line.startsWith('---') && !line.startsWith('<!--')) {
-      currentTask.content += (currentTask.content ? '\n' : '') + line;
+    // Accumulate task content (only if we're in a task)
+    if (currentTask && currentSection && line.trim() && !line.startsWith('<!--')) {
+      currentTask.content += (currentTask.content ? '\n' : '') + line.trim();
     }
   }
   
   // Don't forget the last task
-  if (currentTask && currentSection) {
+  if (currentTask && currentSection && currentTask.content.trim()) {
     sections[currentSection].push(currentTask);
   }
   
