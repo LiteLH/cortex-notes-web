@@ -541,7 +541,9 @@ function TaskCard({ task, status, onDelete, service }) {
   useEffect(() => {
     if (expanded && task.report && !reportContent && service) {
       setLoadingReport(true);
-      service.getFileContent(`yachiyo/${task.report.path}`)
+      // Remove leading ./ from path if present
+      const reportPath = task.report.path.replace(/^\.\//, '');
+      service.getFileContent(`yachiyo/${reportPath}`)
         .then(file => {
           setReportContent(file.content);
         })
