@@ -72,9 +72,13 @@ export class GitHubService {
     }
   }
 
-  async getNote(path) {
+  async getNote(path, format) {
     const file = await this.getFileContent(path);
-    // matter() might use Buffer internally, so we ensured it's polyfilled
+    if (format === 'html') {
+      // HTML files: return raw content, no gray-matter parsing
+      return { content: file.content, format: 'html', sha: file.sha };
+    }
+    // Markdown files: parse frontmatter as before
     const { data, content } = matter(file.content);
     return { ...data, content, sha: file.sha, raw: file.content };
   }
