@@ -3,7 +3,8 @@ import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useL
 import { GitHubService } from './lib/github';
 import { YachiyoTaskPanel } from './components/YachiyoTaskPanel';
 import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
-import { 
+import { HtmlRenderer } from './components/HtmlRenderer';
+import {
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
   LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
@@ -587,22 +588,21 @@ function NoteViewer({ service, notes, onDelete }) {
 
     service.getNotesIndex().then(index => {
       const entry = index.find(n => n.id === id) || localNote;
-      
+
       if (entry) {
         const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`;
-        service.getNote(path)
+        service.getNote(path, entry.format)
             .then(n => {
-                setNote(n);
+                // Merge index metadata with fetched content
+                setNote({ ...entry, ...n });
                 setLoading(false);
             })
             .catch(err => {
                 console.warn("Standard fetch failed, trying direct content fetch...", err);
-                // Try fallback strategies or show error
                 setError("Note content not found (yet). It might be indexing.");
                 setLoading(false);
             });
       } else {
-        // Strategy 3: Blind Fetch (If not in index and not in local)
         const year = new Date().getFullYear();
         const blindPath = `content/${year}/${id}.md`;
         service.getNote(blindPath)
@@ -645,21 +645,30 @@ function NoteViewer({ service, notes, onDelete }) {
   );
   if (!note) return <div className="p-8 text-center">Note not found.</div>;
 
+  const isHtml = note.format === 'html';
+  // Security: only allow HTML rendering for files in reports/ directory
+  const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/');
+
   return (
-    <div className="max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100">
+    <div className={isValidHtmlPath
+      ? "mx-auto bg-white min-h-screen pb-24 md:my-4"
+      : "max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100"
+    }>
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
             <ArrowRight className="rotate-180" size={20} />
         </button>
         <div className="flex gap-2">
-            <button 
-                onClick={handleDelete} 
+            <button
+                onClick={handleDelete}
                 disabled={deleting}
                 className="text-red-500 font-medium text-sm px-3 hover:bg-red-50 rounded disabled:opacity-50"
             >
                 {deleting ? 'Deleting...' : 'Delete'}
             </button>
-            <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">Edit</button>
+            {!isHtml && (
+              <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">Edit</button>
+            )}
         </div>
       </div>
 
@@ -670,19 +679,25 @@ function NoteViewer({ service, notes, onDelete }) {
                 <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
             ))}
             <span className="text-xs text-gray-400 py-1 ml-auto">
-                {new Date(note.created_at).toLocaleString()}
+                {note.created_at ? new Date(note.created_at).toLocaleString() : ''}
             </span>
         </div>
 
-        <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
-            {(note.content || '').split('\n').map((line, i) => {
-                if (line.startsWith('# ')) return null; 
-                if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
-                if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
-                if (line.startsWith('```')) return null; 
-                return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
-            })}
-        </article>
+        {isValidHtmlPath ? (
+          <HtmlRenderer content={note.content} title={note.title} />
+        ) : isHtml ? (
+          <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
+        ) : (
+          <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
+              {(note.content || '').split('\n').map((line, i) => {
+                  if (line.startsWith('# ')) return null;
+                  if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
+                  if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
+                  if (line.startsWith('```')) return null;
+                  return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
+              })}
+          </article>
+        )}
       </div>
     </div>
   );
