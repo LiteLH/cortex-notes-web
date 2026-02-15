@@ -80,13 +80,13 @@ function Sidebar({ onOpenCmd, className = "" }) {
           </div>
         </div>
 
-        <div>
+        <nav aria-label="分類導航">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">分類瀏覽</div>
           <div className="space-y-0.5">
             <SidebarItem icon={FolderOpen} label="所有分類" active={isActive('/browse')} onClick={() => navigate('/browse')} />
             <CategoryNav notes={safeNotes} onNavigate={navigate} />
           </div>
-        </div>
+        </nav>
 
         <div>
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">近期</div>
@@ -175,7 +175,7 @@ function CommandPalette({ open, onOpenChange }) {
       className="fixed inset-0 z-[100] p-4 pt-[20vh] md:pt-[15vh] bg-black/50 backdrop-blur-sm flex justify-center items-start"
       onClick={(e) => { if (e.target === e.currentTarget) onOpenChange(false) }}
     >
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
+      <div role="dialog" aria-label="搜尋筆記" className="w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
           <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
           <CommandPrimitive.Input
@@ -218,6 +218,13 @@ function CommandPalette({ open, onOpenChange }) {
   )
 }
 
+function MobileNavWrapper({ onOpenCmd }) {
+  const location = useLocation()
+  const isEditing = location.pathname === '/new' || location.pathname.startsWith('/edit/')
+  if (isEditing) return null
+  return <MobileNav onOpenCmd={onOpenCmd} />
+}
+
 export function Layout({ children }) {
   const [openCmd, setOpenCmd] = useState(false)
 
@@ -238,7 +245,7 @@ export function Layout({ children }) {
       <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
         {children}
       </main>
-      <MobileNav onOpenCmd={() => setOpenCmd(true)} />
+      <MobileNavWrapper onOpenCmd={() => setOpenCmd(true)} />
       {openCmd && <CommandPalette open={openCmd} onOpenChange={setOpenCmd} />}
     </div>
   )

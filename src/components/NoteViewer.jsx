@@ -33,7 +33,8 @@ export function NoteViewer() {
       return
     }
 
-    service.getNotesIndex().then(index => {
+    service.getNotesIndex().then(raw => {
+      const index = Array.isArray(raw) ? raw : (raw?.notes || [])
       const entry = index.find(n => n.id === id) || localNote
 
       if (entry) {

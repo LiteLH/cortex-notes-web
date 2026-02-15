@@ -37,7 +37,8 @@ export function NoteEditor() {
 
   useEffect(() => {
     if (id) {
-      service.getNotesIndex().then(index => {
+      service.getNotesIndex().then(raw => {
+        const index = Array.isArray(raw) ? raw : (raw?.notes || [])
         const entry = index.find(n => n.id === id)
         if (entry) {
           setOriginalCreatedAt(entry.created_at)
@@ -94,7 +95,9 @@ export function NoteEditor() {
         </div>
 
         <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white flex flex-col">
+          <label className="sr-only" htmlFor="note-title">標題</label>
           <input
+            id="note-title"
             className="w-full text-3xl md:text-4xl font-bold mb-6 outline-none placeholder:text-gray-200"
             placeholder="標題"
             value={title}
@@ -103,7 +106,9 @@ export function NoteEditor() {
 
           <div className="flex items-center gap-3 text-gray-400 mb-8 border-b border-gray-50 pb-4">
             <Tag size={18} />
+            <label className="sr-only" htmlFor="note-tags">標籤</label>
             <input
+              id="note-tags"
               className="flex-1 outline-none text-base placeholder:text-gray-300"
               placeholder="輸入標籤（以逗號分隔）"
               value={tags}
@@ -111,7 +116,9 @@ export function NoteEditor() {
             />
           </div>
 
+          <label className="sr-only" htmlFor="note-content">內容</label>
           <textarea
+            id="note-content"
             className="w-full flex-1 min-h-[200px] resize-none outline-none text-lg leading-relaxed text-gray-700 placeholder:text-gray-200 font-serif"
             placeholder="開始寫作..."
             value={content}

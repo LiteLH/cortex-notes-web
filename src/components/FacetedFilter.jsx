@@ -110,7 +110,7 @@ export function FacetedFilter({ notes, facets, onFacetsChange }) {
     <div className="space-y-3">
       {/* Type Filter Row */}
       {extracted.types.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="篩選條件">
           {extracted.types.map(({ value, count }) => {
             const isSelected = (facets.types || []).includes(value)
             return (
