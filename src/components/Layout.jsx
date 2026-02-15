@@ -128,30 +128,38 @@ function Sidebar({ onOpenCmd, className = "" }) {
 function MobileNav({ onOpenCmd }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const isActive = (path) => location.pathname === path ? "text-blue-600" : "text-gray-400"
-  const isActivePrefix = (prefix) => location.pathname.startsWith(prefix) ? "text-blue-600" : "text-gray-400"
+  const isActive = (path) => location.pathname === path
+  const isActivePrefix = (prefix) => location.pathname.startsWith(prefix)
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-200 flex justify-around items-center h-16 pb-safe z-50">
-      <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-0.5 p-2 ${isActive('/')}`}>
-        <HomeIcon size={22} />
-      </button>
+    <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-gray-200 z-50 pb-[env(safe-area-inset-bottom)]">
+      <div className="flex justify-around py-2">
+        <button onClick={() => navigate('/')} className={`flex flex-col items-center gap-0.5 p-1.5 min-w-[56px] ${isActive('/') ? 'text-blue-600' : 'text-gray-400'}`}>
+          <HomeIcon size={20} />
+          <span className="text-[10px]">首頁</span>
+        </button>
 
-      <button onClick={onOpenCmd} className="flex flex-col items-center gap-0.5 p-2 text-gray-400 hover:text-gray-900">
-        <Search size={22} />
-      </button>
+        <button onClick={onOpenCmd} className="flex flex-col items-center gap-0.5 p-1.5 min-w-[56px] text-gray-400 active:text-gray-900">
+          <Search size={20} />
+          <span className="text-[10px]">搜尋</span>
+        </button>
 
-      <button
-        onClick={() => navigate('/new')}
-        className="mb-8 bg-blue-600 text-white p-3.5 rounded-full shadow-lg shadow-blue-200 active:scale-95 transition-transform"
-      >
-        <Plus size={24} />
-      </button>
+        <button
+          onClick={() => navigate('/new')}
+          className="flex flex-col items-center gap-0.5 p-1.5 min-w-[56px] -mt-5"
+        >
+          <div className="bg-blue-600 text-white p-3 rounded-full shadow-lg shadow-blue-200 active:scale-95 transition-transform">
+            <Plus size={22} />
+          </div>
+          <span className="text-[10px] text-gray-400">新增</span>
+        </button>
 
-      <button onClick={() => navigate('/browse')} className={`flex flex-col items-center gap-0.5 p-2 ${isActivePrefix('/browse')}`}>
-        <Folder size={22} />
-      </button>
-    </div>
+        <button onClick={() => navigate('/browse')} className={`flex flex-col items-center gap-0.5 p-1.5 min-w-[56px] ${isActivePrefix('/browse') ? 'text-blue-600' : 'text-gray-400'}`}>
+          <FolderOpen size={20} />
+          <span className="text-[10px]">分類</span>
+        </button>
+      </div>
+    </nav>
   )
 }
 

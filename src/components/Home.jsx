@@ -48,9 +48,19 @@ function TimelineCard({ note, onClick }) {
   )
 }
 
+function SkeletonCard() {
+  return (
+    <div className="p-4 rounded-xl border border-gray-200 animate-pulse">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+      <div className="h-3 bg-gray-100 rounded w-full mb-2" />
+      <div className="h-3 bg-gray-100 rounded w-2/3" />
+    </div>
+  )
+}
+
 export function Home() {
   const navigate = useNavigate()
-  const { notes } = useNotes()
+  const { notes, isLoading } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
 
   const [searchResults, setSearchResults] = useState(null)
@@ -204,7 +214,15 @@ export function Home() {
             )
           ))}
 
-          {safeNotes.length === 0 && (
+          {isLoading && safeNotes.length === 0 && (
+            <div className="space-y-3">
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          )}
+
+          {!isLoading && safeNotes.length === 0 && (
             <div className="text-center py-20 text-gray-400">
               <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Book size={32} className="opacity-20" />
