@@ -29,14 +29,14 @@ function AuthScreen({ onLogin, error }) {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="bg-blue-600 p-6 text-white text-center">
           <Lock size={48} className="mx-auto mb-2 opacity-90" />
-          <h1 className="text-2xl font-bold">Private Access</h1>
-          <p className="text-blue-100 text-sm mt-1">Unlock your Cortex Notebook</p>
+          <h1 className="text-2xl font-bold">私人存取</h1>
+          <p className="text-blue-100 text-sm mt-1">解鎖筆記本</p>
         </div>
         
         <div className="p-8">
           <div className="mb-6 text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <p className="font-semibold mb-1">Why do I need this?</p>
-            <p>Your notes are stored in a <strong>Private GitHub Repository</strong> for security. To view them, you need to provide a Personal Access Token (PAT).</p>
+            <p className="font-semibold mb-1">為什麼需要這個？</p>
+            <p>你的筆記儲存在<strong>私人 GitHub 儲存庫</strong>中。需要提供 Personal Access Token (PAT) 才能存取。</p>
           </div>
 
           {error && (
@@ -58,13 +58,13 @@ function AuthScreen({ onLogin, error }) {
             onClick={() => onLogin(input)}
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md active:transform active:scale-95"
           >
-            Unlock Notebook
+            解鎖筆記本
           </button>
           
           <div className="mt-6 text-center text-xs text-gray-400">
-            <p>Token is stored locally in your browser.</p>
+            <p>Token 儲存在瀏覽器本機。</p>
             <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mt-1 inline-block">
-              Generate a new token (Classic) &rarr;
+              產生新的 Token (Classic) &rarr;
             </a>
           </div>
         </div>
@@ -105,7 +105,7 @@ function App() {
           });
         } else {
           setIsAuthenticated(false);
-          setAuthError(res.error || "Invalid token");
+          setAuthError(res.error || "Token 無效");
         }
       });
     }
@@ -125,7 +125,7 @@ function App() {
 
   const handleLogin = (t) => {
     if (!t.trim()) {
-        setAuthError("Token cannot be empty");
+        setAuthError("Token 不能為空");
         return;
     }
     localStorage.setItem('gh_token', t);
@@ -218,25 +218,25 @@ function CommandPalette({ open, onOpenChange, notes }) {
             <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
                 <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
                 <CommandPrimitive.Input 
-                    placeholder="Search notes, commands, tags..." 
+                    placeholder="搜尋筆記、標籤、內容..."
                     className="flex h-14 w-full rounded-md bg-transparent py-3 text-lg outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
                     autoFocus
                 />
             </div>
             <CommandPrimitive.List className="max-h-[60vh] overflow-y-auto p-2">
-                <CommandPrimitive.Empty className="py-6 text-center text-sm text-gray-500">No results found.</CommandPrimitive.Empty>
+                <CommandPrimitive.Empty className="py-6 text-center text-sm text-gray-500">找不到相關筆記</CommandPrimitive.Empty>
                 
-                <CommandPrimitive.Group heading="Actions" className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                <CommandPrimitive.Group heading="操作" className="px-2 py-1.5 text-xs font-medium text-gray-500">
                     <CommandPrimitive.Item 
                         className="flex cursor-default select-none items-center rounded-sm px-2 py-3 text-sm outline-none aria-selected:bg-blue-50 aria-selected:text-blue-700 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                         onSelect={() => { onOpenChange(false); navigate('/new'); }}
                     >
                         <Plus className="mr-2 h-4 w-4" />
-                        <span>Create New Note</span>
+                        <span>新增筆記</span>
                     </CommandPrimitive.Item>
                 </CommandPrimitive.Group>
 
-                <CommandPrimitive.Group heading="Recent Notes" className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                <CommandPrimitive.Group heading="近期筆記" className="px-2 py-1.5 text-xs font-medium text-gray-500">
                     {safeNotes.slice(0, 10).map(note => (
                         <CommandPrimitive.Item 
                             key={note.id}
@@ -244,7 +244,7 @@ function CommandPalette({ open, onOpenChange, notes }) {
                             onSelect={() => { onOpenChange(false); navigate(`/note/${note.id}`); }}
                         >
                             <FileText className="mr-2 h-4 w-4" />
-                            <span className="flex-1 truncate">{note.title || "Untitled"}</span>
+                            <span className="flex-1 truncate">{note.title || "無標題"}</span>
                             <span className="text-xs text-gray-400 ml-2">
                                 {isValid(new Date(note.created_at)) ? new Date(note.created_at).toLocaleDateString() : ''}
                             </span>
@@ -292,7 +292,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
             className="w-full flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-500 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm"
         >
             <Search size={14} />
-            <span>Search...</span>
+            <span>搜尋...</span>
             <kbd className="ml-auto text-[10px] bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-mono text-gray-400">⌘K</kbd>
         </button>
       </div>
@@ -300,10 +300,10 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
       <div className="flex-1 overflow-y-auto px-3 space-y-6">
         {/* Section: Start */}
         <div>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Start</div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">開始</div>
             <div className="space-y-0.5">
-                <SidebarItem icon={HomeIcon} label="Home" active={isActive('/')} onClick={() => navigate('/')} />
-                <SidebarItem icon={Plus} label="New Note" onClick={() => navigate('/new')} />
+                <SidebarItem icon={HomeIcon} label="首頁" active={isActive('/')} onClick={() => navigate('/')} />
+                <SidebarItem icon={Plus} label="新增筆記" onClick={() => navigate('/new')} />
             </div>
         </div>
 
@@ -318,7 +318,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
 
         {/* Section: Recent */}
         <div>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Recent</div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">近期</div>
             <div className="space-y-0.5">
                 {recentNotes.map(note => (
                     <div 
@@ -327,7 +327,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
                         className="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-200/50 hover:text-gray-900 rounded-md cursor-pointer transition-colors"
                     >
                         <FileText size={14} className="text-gray-400 group-hover:text-blue-500" />
-                        <span className="truncate">{note.title || "Untitled"}</span>
+                        <span className="truncate">{note.title || "無標題"}</span>
                     </div>
                 ))}
             </div>
@@ -335,7 +335,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
 
         {/* Section: Tags */}
         <div>
-            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">Tags</div>
+            <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">標籤</div>
             <div className="flex flex-wrap gap-1.5 px-1">
                 {tags.map(([tag, count]) => (
                     <span key={tag} className="px-2 py-1 bg-white border border-gray-200 rounded-md text-xs text-gray-600 hover:border-blue-300 cursor-pointer">
@@ -348,7 +348,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
 
       <div className="p-4 border-t bg-gray-50/50">
         <button onClick={onLogout} className="flex items-center gap-2 text-gray-500 text-sm w-full hover:bg-red-50 hover:text-red-600 p-2 rounded transition-colors">
-          <LogOut size={16} /> Logout
+          <LogOut size={16} /> 登出
         </button>
       </div>
     </div>
@@ -410,21 +410,21 @@ function Home({ notes, service, onOpenCmd }) {
   
   // Group notes by time
   const timeline = useMemo(() => {
-    const groups = { Today: [], Yesterday: [], ThisWeek: [], Older: [] };
+    const groups = { '今天': [], '昨天': [], '本週': [], '更早': [] };
     
     safeNotes.forEach(note => {
         try {
             const date = parseISO(note.created_at || '');
             if (!isValid(date)) {
-                groups.Older.push(note); // Fallback for invalid dates
+                groups['更早'].push(note); // Fallback for invalid dates
                 return;
             }
-            if (isToday(date)) groups.Today.push(note);
-            else if (isYesterday(date)) groups.Yesterday.push(note);
-            else if (isThisWeek(date)) groups.ThisWeek.push(note);
-            else groups.Older.push(note);
+            if (isToday(date)) groups['今天'].push(note);
+            else if (isYesterday(date)) groups['昨天'].push(note);
+            else if (isThisWeek(date)) groups['本週'].push(note);
+            else groups['更早'].push(note);
         } catch (e) {
-            groups.Older.push(note);
+            groups['更早'].push(note);
         }
     });
     
@@ -435,7 +435,7 @@ function Home({ notes, service, onOpenCmd }) {
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
        {/* Mobile Header */}
        <div className="flex justify-between items-center mb-8 md:hidden">
-         <h1 className="text-2xl font-bold text-gray-900">Stream</h1>
+         <h1 className="text-2xl font-bold text-gray-900">我的筆記</h1>
          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
             ME
          </div>
@@ -447,7 +447,7 @@ function Home({ notes, service, onOpenCmd }) {
          className="hidden md:flex items-center gap-3 p-4 mb-4 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:border-blue-400 transition-colors group"
        >
          <Search className="text-gray-400 group-hover:text-blue-500" />
-         <span className="text-gray-400 text-lg font-light">What's on your mind?</span>
+         <span className="text-gray-400 text-lg font-light">搜尋筆記...</span>
        </div>
 
 {/* Timeline */}
@@ -470,8 +470,8 @@ function Home({ notes, service, onOpenCmd }) {
                 <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Book size={32} className="opacity-20" />
                 </div>
-                <p>No thoughts yet.</p>
-                <button onClick={onOpenCmd} className="text-blue-500 text-sm mt-2 hover:underline">Start writing</button>
+                <p>還沒有筆記</p>
+                <button onClick={onOpenCmd} className="text-blue-500 text-sm mt-2 hover:underline">開始寫一篇吧</button>
             </div>
          )}
        </div>
@@ -494,10 +494,10 @@ function TimelineCard({ note, onClick }) {
         >
             <div className="flex justify-between items-start mb-2">
                 <div className="flex gap-2 items-center">
-                    {isReport ? <span className="text-purple-500 bg-purple-50 p-1 rounded text-xs font-bold">REPORT</span> :
-                     isJob ? <span className="text-green-600 bg-green-50 p-1 rounded text-xs font-bold">CAREER</span> : null}
+                    {isReport ? <span className="text-purple-500 bg-purple-50 p-1 rounded text-xs font-bold">報告</span> :
+                     isJob ? <span className="text-green-600 bg-green-50 p-1 rounded text-xs font-bold">職涯</span> : null}
                     <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-                        {note.title || "Untitled"}
+                        {note.title || "無標題"}
                     </h3>
                 </div>
                 <span className="text-[10px] text-gray-400 font-mono">
@@ -506,7 +506,7 @@ function TimelineCard({ note, onClick }) {
             </div>
             
             <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
-                {note.excerpt || "No preview content available..."}
+                {note.excerpt || "尚無預覽內容..."}
             </p>
 
             <div className="flex items-center gap-2">
@@ -555,7 +555,7 @@ function NoteViewer({ service, notes, onDelete }) {
             })
             .catch(err => {
                 console.warn("Standard fetch failed, trying direct content fetch...", err);
-                setError("Note content not found (yet). It might be indexing.");
+                setError("筆記內容未找到（可能正在索引中）");
                 setLoading(false);
             });
       } else {
@@ -567,18 +567,18 @@ function NoteViewer({ service, notes, onDelete }) {
                 setLoading(false);
             })
             .catch(() => {
-                setError("Note not found in index or storage.");
+                setError("在索引或儲存中找不到筆記");
                 setLoading(false);
             });
       }
     }).catch(err => {
-        setError("Failed to load index.");
+        setError("無法載入索引");
         setLoading(false);
     });
   }, [id, service, notes]);
 
   const handleDelete = async () => {
-      if (!confirm("Are you sure you want to delete this note?")) return;
+      if (!confirm("確定要刪除這篇筆記嗎？")) return;
       setDeleting(true);
       try {
           const path = note?.path || `content/${new Date().getFullYear()}/${id}.md`; 
@@ -586,7 +586,7 @@ function NoteViewer({ service, notes, onDelete }) {
           if (onDelete) onDelete(id);
           navigate('/');
       } catch (e) {
-          alert(`Failed to delete: ${e.message}`);
+          alert(`刪除失敗：${e.message}`);
       } finally {
           setDeleting(false);
       }
@@ -596,10 +596,10 @@ function NoteViewer({ service, notes, onDelete }) {
   if (error) return (
     <div className="p-8 text-center">
         <div className="text-red-500 mb-2">Error: {error}</div>
-        <button onClick={() => window.location.reload()} className="text-blue-500 underline">Retry</button>
+        <button onClick={() => window.location.reload()} className="text-blue-500 underline">重試</button>
     </div>
   );
-  if (!note) return <div className="p-8 text-center">Note not found.</div>;
+  if (!note) return <div className="p-8 text-center">找不到筆記</div>;
 
   const isHtml = note.format === 'html';
   // Security: only allow HTML rendering for files in reports/ directory
@@ -620,10 +620,10 @@ function NoteViewer({ service, notes, onDelete }) {
                 disabled={deleting}
                 className="text-red-500 font-medium text-sm px-3 hover:bg-red-50 rounded disabled:opacity-50"
             >
-                {deleting ? 'Deleting...' : 'Delete'}
+                {deleting ? '刪除中...' : '刪除'}
             </button>
             {!isHtml && (
-              <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">Edit</button>
+              <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">編輯</button>
             )}
         </div>
       </div>
@@ -683,7 +683,7 @@ function NoteEditor({ service, refreshNotes, onSave }) {
     }, [id, service]);
 
     const handleSave = async () => {
-        if (!title.trim()) return alert("Title is required");
+        if (!title.trim()) return alert("請輸入標題");
         setSaving(true);
         try {
             const noteId = id || crypto.randomUUID();
@@ -708,7 +708,7 @@ function NoteEditor({ service, refreshNotes, onSave }) {
             navigate(`/note/${noteId}`);
         } catch (e) {
             console.error(e);
-            alert(`Failed to save: ${e.message}`);
+            alert(`儲存失敗：${e.message}`);
         } finally {
             setSaving(false);
         }
@@ -718,21 +718,21 @@ function NoteEditor({ service, refreshNotes, onSave }) {
         <div className="flex flex-col h-full bg-white md:bg-gray-50/50">
             <div className="md:max-w-3xl md:mx-auto md:my-8 md:bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 w-full h-full flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
-                    <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-900">Cancel</button>
+                    <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-900">取消</button>
                     <button 
                         disabled={saving}
                         onClick={handleSave}
                         className="bg-black text-white px-5 py-2 rounded-full text-sm font-bold shadow-md shadow-gray-200 flex items-center gap-2 disabled:opacity-50 hover:bg-gray-800 transition-all"
                     >
                         {saving && <Loader2 className="animate-spin w-3 h-3" />}
-                        Save
+                        儲存
                     </button>
                 </div>
                 
                 <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white">
                     <input 
                         className="w-full text-3xl md:text-4xl font-bold mb-6 outline-none placeholder:text-gray-200" 
-                        placeholder="Title"
+                        placeholder="標題"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                     />
@@ -741,7 +741,7 @@ function NoteEditor({ service, refreshNotes, onSave }) {
                         <Tag size={18} />
                         <input 
                             className="flex-1 outline-none text-base placeholder:text-gray-300" 
-                            placeholder="Tags (comma separated)"
+                            placeholder="輸入標籤（以逗號分隔）"
                             value={tags}
                             onChange={e => setTags(e.target.value)}
                         />
@@ -749,7 +749,7 @@ function NoteEditor({ service, refreshNotes, onSave }) {
 
                     <textarea 
                         className="w-full h-[calc(100%-200px)] resize-none outline-none text-lg leading-relaxed text-gray-700 placeholder:text-gray-200 font-serif"
-                        placeholder="Start writing..."
+                        placeholder="開始寫作..."
                         value={content}
                         onChange={e => setContent(e.target.value)}
                     />

@@ -5,7 +5,7 @@ import { Folder, FileText, ChevronRight, Briefcase, Cpu, Wrench, BookOpen, Calen
 // 分類定義
 const CATEGORIES = {
   'areas': {
-    label: '📁 Areas',
+    label: '📁 領域',
     description: '長期關注領域',
     icon: Folder,
     color: 'blue',
@@ -16,14 +16,14 @@ const CATEGORIES = {
     }
   },
   'projects': {
-    label: '🚀 Projects',
+    label: '🚀 專案',
     description: '專案',
     icon: Folder,
     color: 'green',
     subcategories: {}
   },
   'resources': {
-    label: '📚 Resources',
+    label: '📚 資源',
     description: '參考資料',
     icon: BookOpen,
     color: 'purple',
@@ -34,14 +34,14 @@ const CATEGORIES = {
     }
   },
   'journal': {
-    label: '📅 Journal',
+    label: '📅 日誌',
     description: '日誌',
     icon: Calendar,
     color: 'orange',
     subcategories: {}
   },
 'inbox': {
-    label: '📥 Inbox',
+    label: '📥 收件匣',
     description: '未分類',
     icon: Inbox,
     color: 'gray',
@@ -155,7 +155,7 @@ export function CategoryBrowser({ notes }) {
             >
               <FileText size={18} className="text-gray-400" />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900 truncate">{note.title || 'Untitled'}</div>
+                <div className="font-medium text-gray-900 truncate">{note.title || '無標題'}</div>
                 <div className="text-xs text-gray-400">{note.path}</div>
               </div>
               <ChevronRight size={16} className="text-gray-300" />
