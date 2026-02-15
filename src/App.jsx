@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext.jsx';
+import { useNotes } from './contexts/NotesContext.jsx';
 
 import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
 import { HtmlRenderer } from './components/HtmlRenderer';
@@ -77,26 +78,9 @@ function AuthScreen() {
 }
 
 function App() {
-  const { service, isAuthenticated, isLoading, logout } = useAuth();
-  const [notes, setNotes] = useState([]);
+  const { service, isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { notes, refreshNotes, optimisticUpdate, optimisticDelete } = useNotes();
   const [openCmd, setOpenCmd] = useState(false);
-
-  useEffect(() => {
-    if (service) {
-      service.getNotesIndex().then(data => {
-        const safeData = (data || []).map(n => ({
-          ...n,
-          created_at: n.created_at || new Date().toISOString()
-        }));
-        const sorted = safeData.sort((a, b) => {
-          const dateA = new Date(a.created_at);
-          const dateB = new Date(b.created_at);
-          return (isValid(dateB) ? dateB : new Date()) - (isValid(dateA) ? dateA : new Date());
-        });
-        setNotes(sorted);
-      });
-    }
-  }, [service]);
 
   // Command Palette Shortcut
   useEffect(() => {
@@ -110,31 +94,7 @@ function App() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const refreshNotes = () => {
-    if (service) {
-      service.getNotesIndex().then(data => {
-        const safeData = (data || []).map(n => ({
-          ...n,
-          created_at: n.created_at || new Date().toISOString()
-        }));
-        const sorted = safeData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setNotes(sorted);
-      });
-    }
-  };
-
-  const handleSaveNote = (newNote) => {
-    setNotes(prev => {
-      const filtered = prev.filter(n => n.id !== newNote.id);
-      return [newNote, ...filtered];
-    });
-  };
-
-  const handleDeleteNote = (id) => {
-    setNotes(prev => prev.filter(n => n.id !== id));
-  };
-
-  if (isLoading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="animate-spin text-blue-600" size={32} />
@@ -158,16 +118,16 @@ function App() {
         />
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
           <Routes>
-            <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
+            <Route path="/" element={<Home notes={notes} service={service} onOpenCmd={() => setOpenCmd(true)} />} />
             <Route path="/browse" element={<CategoryBrowser notes={notes} />} />
             <Route path="/browse/:category" element={<CategoryBrowser notes={notes} />} />
             <Route path="/browse/:category/:subcategory" element={<CategoryBrowser notes={notes} />} />
-            <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
-            <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
-            <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
+            <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={optimisticDelete} />} />
+            <Route path="/new" element={<NoteEditor service={service} onSave={optimisticUpdate} />} />
+            <Route path="/edit/:id" element={<NoteEditor service={service} onSave={optimisticUpdate} />} />
           </Routes>
         </main>
-        <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
+        <MobileNav onOpenCmd={() => setOpenCmd(true)} />
 
         {openCmd && <CommandPalette open={openCmd} onOpenChange={setOpenCmd} notes={notes} />}
       </div>
@@ -345,7 +305,7 @@ function SidebarItem({ icon: Icon, label, active, onClick }) {
     )
 }
 
-function MobileNav({ refreshNotes, onOpenCmd }) {
+function MobileNav({ onOpenCmd }) {
   const navigate = useNavigate();
   const location = useLocation();
   const isActive = (path) => location.pathname === path ? "text-blue-600" : "text-gray-400";
@@ -379,7 +339,7 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
 }
 
 // Timeline View Home
-function Home({ notes, service, onOpenCmd }) {
+function Home({ notes, onOpenCmd }) {
   const navigate = useNavigate();
   const safeNotes = Array.isArray(notes) ? notes : [];
   
@@ -630,7 +590,7 @@ function NoteViewer({ service, notes, onDelete }) {
   );
 }
 
-function NoteEditor({ service, refreshNotes, onSave }) {
+function NoteEditor({ service, onSave }) {
     const { id } = useParams();
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
