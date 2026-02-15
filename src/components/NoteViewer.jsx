@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useNotes } from '../contexts/NotesContext.jsx'
 import { HtmlRenderer } from './HtmlRenderer.jsx'
+import { createSearchIndex, searchNotes } from '../lib/search.js'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
-import { Loader2, ArrowRight } from 'lucide-react'
+import { Loader2, ArrowRight, FileText } from 'lucide-react'
 import { isValid } from 'date-fns'
 
 export function NoteViewer() {
@@ -92,6 +93,18 @@ export function NoteViewer() {
   const isHtml = note.format === 'html'
   const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/')
 
+  // Related notes via MiniSearch
+  const relatedNotes = useMemo(() => {
+    if (!notes.length || !note) return []
+    const index = createSearchIndex(notes)
+    const query = [note.title, ...(note.tags || [])].join(' ')
+    return searchNotes(index, query)
+      .filter(r => r.id !== note.id)
+      .slice(0, 5)
+      .map(r => notes.find(n => n.id === r.id))
+      .filter(Boolean)
+  }, [notes, note])
+
   return (
     <div className={isValidHtmlPath
       ? "mx-auto bg-white min-h-screen pb-24 md:my-4"
@@ -136,6 +149,30 @@ export function NoteViewer() {
               {note.content || ''}
             </Markdown>
           </article>
+        )}
+
+        {/* Related Notes */}
+        {relatedNotes.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-500 mb-4">相關筆記</h3>
+            <div className="space-y-2">
+              {relatedNotes.map(rn => (
+                <button
+                  key={rn.id}
+                  onClick={() => navigate(`/note/${rn.id}`)}
+                  className="w-full flex items-center gap-3 p-3 text-left bg-gray-50 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  <FileText size={16} className="text-gray-400 shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-800 truncate">{rn.title || '無標題'}</div>
+                    {rn.excerpt && (
+                      <div className="text-xs text-gray-400 truncate">{rn.excerpt}</div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

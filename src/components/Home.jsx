@@ -4,7 +4,8 @@ import { useNotes } from '../contexts/NotesContext.jsx'
 import { SearchBar } from './SearchBar.jsx'
 import { TagFilter, filterByTags } from './TagFilter.jsx'
 import { CardGrid } from './CardGrid.jsx'
-import { Book } from 'lucide-react'
+import { Calendar } from './Calendar.jsx'
+import { Book, X } from 'lucide-react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
 
 function TimelineCard({ note, onClick }) {
@@ -55,6 +56,7 @@ export function Home() {
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
+  const [dateFilter, setDateFilter] = useState(null)
 
   // Group notes by time
   const timeline = useMemo(() => {
@@ -99,11 +101,36 @@ export function Home() {
     navigate(`/note/${note.id}`)
   }
 
+  const handleDateClick = (dateStr) => {
+    setDateFilter(dateStr)
+  }
+
+  const clearDateFilter = () => {
+    setDateFilter(null)
+  }
+
+  // Filter by date if active
+  const dateFilteredNotes = useMemo(() => {
+    if (!dateFilter) return safeNotes
+    return safeNotes.filter(note => {
+      if (!note.created_at) return false
+      return note.created_at.startsWith(dateFilter)
+    })
+  }, [safeNotes, dateFilter])
+
+  // Monthly summary
+  const monthlySummary = useMemo(() => {
+    const now = new Date()
+    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const thisMonth = safeNotes.filter(n => n.created_at && n.created_at.startsWith(monthPrefix))
+    const reports = thisMonth.filter(n => n.format === 'html' || (n.tags || []).some(t => ['report', 'research'].includes(t)))
+    return { total: thisMonth.length, reports: reports.length }
+  }, [safeNotes])
+
   // Determine which notes to display
   const isSearching = searchResults !== null
-  const displayNotes = isSearching
-    ? filterByTags(searchResults, selectedTags)
-    : filterByTags(safeNotes, selectedTags)
+  const baseNotes = isSearching ? searchResults : dateFilteredNotes
+  const displayNotes = filterByTags(baseNotes, selectedTags)
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
@@ -120,9 +147,29 @@ export function Home() {
         <SearchBar onResults={handleSearchResults} onClear={handleSearchClear} />
       </div>
 
+      {/* Calendar + Monthly Summary */}
+      <div className="mb-6 hidden md:block">
+        <Calendar notes={safeNotes} onDateClick={handleDateClick} />
+        {monthlySummary.total > 0 && (
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            本月新增 {monthlySummary.total} 筆{monthlySummary.reports > 0 ? ` · ${monthlySummary.reports} 份報告` : ''}
+          </p>
+        )}
+      </div>
+
+      {/* Date Filter Indicator */}
+      {dateFilter && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+          <span>顯示 {dateFilter} 的筆記（{dateFilteredNotes.length} 筆）</span>
+          <button onClick={clearDateFilter} className="ml-auto hover:bg-blue-100 rounded p-0.5">
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       {/* Tag Filter */}
       <div className="mb-6">
-        <TagFilter notes={isSearching ? searchResults : safeNotes} selectedTags={selectedTags} onToggle={handleTagToggle} />
+        <TagFilter notes={isSearching ? searchResults : dateFilteredNotes} selectedTags={selectedTags} onToggle={handleTagToggle} />
       </div>
 
       {/* Search Results (CardGrid) */}
@@ -133,13 +180,13 @@ export function Home() {
           </h2>
           <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="找不到符合的筆記" />
         </div>
-      ) : selectedTags.length > 0 ? (
-        /* Filtered by tags — show as CardGrid */
+      ) : selectedTags.length > 0 || dateFilter ? (
+        /* Filtered by tags or date — show as CardGrid */
         <div>
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
             篩選結果（{displayNotes.length} 筆）
           </h2>
-          <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合標籤的筆記" />
+          <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" />
         </div>
       ) : (
         /* Default: Timeline View */
