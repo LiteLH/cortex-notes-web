@@ -10,10 +10,20 @@ import { RediscoverySection } from './RediscoverySection.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
 
+const TIMELINE_TYPE_BADGE = {
+  decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
+  learning: { label: '學習', color: 'text-green-600 bg-green-50' },
+  meeting: { label: '會議', color: 'text-blue-600 bg-blue-50' },
+  thought: { label: '想法', color: 'text-gray-600 bg-gray-100' },
+  memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
+}
+
 function TimelineCard({ note, onClick }) {
   const safeTags = Array.isArray(note.tags) ? note.tags : []
-  const isReport = safeTags.some(t => ['report', 'research', 'deep-dive'].includes(t)) || (note.title || '').includes('Report')
-  const isJob = safeTags.some(t => ['career', 'job', 'resume'].includes(t))
+  const isHtml = note.format === 'html'
+  const badge = isHtml
+    ? { label: '報告', color: 'text-purple-500 bg-purple-50' }
+    : TIMELINE_TYPE_BADGE[note.note_type] || null
   const safeDate = note.created_at ? new Date(note.created_at) : new Date()
   const timeStr = isValid(safeDate) ? format(safeDate, 'HH:mm') : '--:--'
 
@@ -24,8 +34,7 @@ function TimelineCard({ note, onClick }) {
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex gap-2 items-center">
-          {isReport ? <span className="text-purple-500 bg-purple-50 p-1 rounded text-xs font-bold">報告</span> :
-           isJob ? <span className="text-green-600 bg-green-50 p-1 rounded text-xs font-bold">職涯</span> : null}
+          {badge && <span className={`${badge.color} p-1 rounded text-xs font-bold`}>{badge.label}</span>}
           <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
             {note.title || "無標題"}
           </h3>

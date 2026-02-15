@@ -3,6 +3,14 @@ import { Globe } from 'lucide-react'
 const MAX_TAGS = 3
 const MAX_EXCERPT = 120
 
+const TYPE_BADGE = {
+  decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
+  learning: { label: '學習', color: 'text-green-600 bg-green-50' },
+  meeting: { label: '會議', color: 'text-blue-600 bg-blue-50' },
+  thought: { label: '想法', color: 'text-gray-600 bg-gray-100' },
+  memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   try {
@@ -28,10 +36,18 @@ export function NoteCard({ note, onClick }) {
       className="w-full text-left p-4 rounded-xl border border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm transition-all min-h-[88px] flex flex-col gap-2"
     >
       <div className="flex items-start justify-between gap-2">
-        <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2 flex-1">
-          {isHtml && <Globe size={14} className="inline mr-1 text-blue-500" />}
-          {note.title || '無標題'}
-        </h3>
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          {isHtml ? (
+            <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium rounded text-purple-600 bg-purple-50">報告</span>
+          ) : TYPE_BADGE[note.note_type] ? (
+            <span className={`shrink-0 px-1.5 py-0.5 text-xs font-medium rounded ${TYPE_BADGE[note.note_type].color}`}>
+              {TYPE_BADGE[note.note_type].label}
+            </span>
+          ) : null}
+          <h3 className="font-medium text-gray-900 text-sm leading-tight line-clamp-2">
+            {note.title || '無標題'}
+          </h3>
+        </div>
         <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
           {formatDate(note.created_at)}
         </span>
