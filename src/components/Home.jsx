@@ -5,6 +5,7 @@ import { SearchBar } from './SearchBar.jsx'
 import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
 import { CardGrid } from './CardGrid.jsx'
 import { Calendar } from './Calendar.jsx'
+import { ReviewSection } from './ReviewSection.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
 
@@ -152,6 +153,9 @@ export function Home() {
       <div className="mb-4">
         <SearchBar onResults={handleSearchResults} onClear={handleSearchClear} />
       </div>
+
+      {/* Today's Review */}
+      {!isSearching && <ReviewSection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
       {/* Calendar + Monthly Summary (collapsible) */}
       <div className="mb-6 hidden md:block">
