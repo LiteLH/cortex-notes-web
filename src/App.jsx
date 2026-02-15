@@ -665,16 +665,21 @@ function NoteEditor({ service, refreshNotes, onSave }) {
     const [content, setContent] = useState('');
     const [tags, setTags] = useState('');
     const [saving, setSaving] = useState(false);
+    const [originalCreatedAt, setOriginalCreatedAt] = useState(null);
+    const [originalPath, setOriginalPath] = useState(null);
 
     useEffect(() => {
         if (id) {
              service.getNotesIndex().then(index => {
                 const entry = index.find(n => n.id === id);
                 if (entry) {
+                    setOriginalCreatedAt(entry.created_at);
+                    setOriginalPath(entry.path);
                     service.getNote(entry.path).then(n => {
                         setTitle(n.title);
                         setContent(n.content);
                         setTags(Array.isArray(n.tags) ? n.tags.join(', ') : '');
+                        if (n.created_at) setOriginalCreatedAt(n.created_at);
                     });
                 }
              });
@@ -691,8 +696,8 @@ function NoteEditor({ service, refreshNotes, onSave }) {
                 title,
                 content,
                 tags: tags.split(',').map(t => t.trim()).filter(Boolean),
-                created_at: new Date().toISOString(),
-                path: `content/${new Date().getFullYear()}/${noteId}.md`
+                created_at: originalCreatedAt || new Date().toISOString(),
+                path: originalPath || `content/${new Date().getFullYear()}/${noteId}.md`
             };
 
             await service.saveNote(noteData);
