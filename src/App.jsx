@@ -4,6 +4,9 @@ import { GitHubService } from './lib/github';
 
 import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
 import { HtmlRenderer } from './components/HtmlRenderer';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import {
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
@@ -644,14 +647,10 @@ function NoteViewer({ service, notes, onDelete }) {
         ) : isHtml ? (
           <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
         ) : (
-          <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
-              {(note.content || '').split('\n').map((line, i) => {
-                  if (line.startsWith('# ')) return null;
-                  if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
-                  if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
-                  if (line.startsWith('```')) return null;
-                  return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
-              })}
+          <article className="prose prose-slate prose-lg max-w-none">
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+              {note.content || ''}
+            </Markdown>
           </article>
         )}
       </div>
