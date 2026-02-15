@@ -16,7 +16,7 @@ export function NotesProvider({ children }) {
       const raw = await service.getNotesIndex()
       // Support new { _stats, notes } format and legacy array format
       const index = Array.isArray(raw) ? raw : (raw?.notes || [])
-      const stats = Array.isArray(raw) ? null : (raw?._stats || null)
+      const stats = Array.isArray(raw) ? null : { ...(raw?._stats || {}), _tag_clusters: raw?._tag_clusters || [] }
       const notes = (index || [])
         .map(n => ({ ...n, created_at: n.created_at || new Date().toISOString() }))
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
