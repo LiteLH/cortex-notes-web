@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Folder, FileText, ChevronRight, Briefcase, Cpu, Wrench, BookOpen, Calendar, Inbox, Archive } from 'lucide-react';
+import { useNotes } from '../contexts/NotesContext.jsx';
 
 // 分類定義
 const CATEGORIES = {
@@ -68,10 +69,11 @@ export function getCategoryFromPath(path) {
 }
 
 // 分類瀏覽頁面
-export function CategoryBrowser({ notes }) {
+export function CategoryBrowser() {
   const navigate = useNavigate();
   const { category, subcategory } = useParams();
-  
+  const { notes } = useNotes();
+
   const safeNotes = Array.isArray(notes) ? notes : [];
   
   // 按分類組織筆記
