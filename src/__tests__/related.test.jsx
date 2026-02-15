@@ -10,17 +10,24 @@ const notes = [
 ]
 
 describe('findRelatedNotes', () => {
-  it('finds related notes for a given note', () => {
-    const current = notes[0] // React Hooks
-    const result = findRelatedNotes(current, notes, 3)
-    expect(result.length).toBeLessThanOrEqual(3)
-    expect(result.every(r => r.id !== '1')).toBe(true) // excludes self
+  it('prefers pre-computed related field from index.json', () => {
+    const noteWithRelated = { ...notes[0], related: ['2', '4'] }
+    const result = findRelatedNotes(noteWithRelated, notes, 5)
+    expect(result.length).toBe(2)
+    expect(result[0].id).toBe('2')
+    expect(result[1].id).toBe('4')
   })
 
-  it('prioritizes tag overlap', () => {
-    const current = notes[0] // React Hooks — has react tag
+  it('falls back to scoring when no pre-computed related', () => {
+    const current = notes[0]
+    const result = findRelatedNotes(current, notes, 3)
+    expect(result.length).toBeLessThanOrEqual(3)
+    expect(result.every(r => r.id !== '1')).toBe(true)
+  })
+
+  it('prioritizes tag overlap in fallback', () => {
+    const current = notes[0]
     const result = findRelatedNotes(current, notes, 5)
-    // React-related notes should rank higher than career/python
     const reactIds = result.filter(r => (r.tags || []).includes('react')).map(r => r.id)
     expect(reactIds.length).toBeGreaterThan(0)
   })

@@ -2,16 +2,28 @@ import MiniSearch from 'minisearch'
 
 /**
  * Create a MiniSearch index from notes array.
- * Uses custom tokenizer for Chinese (unigram) + English (word-based).
+ * Uses pre-computed search_tokens (jieba) when available,
+ * falls back to client-side unigram tokenization.
  */
 export function createSearchIndex(notes) {
+  // Check if any note has pre-computed search_tokens
+  const hasPreTokens = notes.some(n => n.search_tokens?.length)
+
   const index = new MiniSearch({
-    fields: ['title', 'searchable_text', 'tags_text'],
+    fields: hasPreTokens
+      ? ['title', 'tokens_text', 'tags_text']
+      : ['title', 'searchable_text', 'tags_text'],
     storeFields: ['id'],
-    tokenize: (text) => {
-      // Chinese: unigram (single character). English: word-based.
-      return (text || '').match(/[\u4e00-\u9fff]|[a-zA-Z0-9]+/g) || []
-    },
+    tokenize: hasPreTokens
+      ? (text) => {
+          // For pre-tokenized text: split on spaces (tokens joined with spaces)
+          // For title/tags: use standard word splitting
+          return (text || '').split(/\s+/).filter(Boolean)
+        }
+      : (text) => {
+          // Fallback: Chinese unigram + English word-based
+          return (text || '').match(/[\u4e00-\u9fff]|[a-zA-Z0-9]+/g) || []
+        },
     searchOptions: {
       boost: { title: 3, tags_text: 2 },
       fuzzy: 0.2,
@@ -24,12 +36,17 @@ export function createSearchIndex(notes) {
   for (const note of notes) {
     if (seen.has(note.id)) continue
     seen.add(note.id)
-    docs.push({
+    const doc = {
       id: note.id,
       title: note.title || '',
-      searchable_text: note.searchable_text || note.excerpt || '',
-      tags_text: (note.tags || []).join(' '),
-    })
+      tags_text: [...(note.tags || []), ...(note.ai_tags || [])].join(' '),
+    }
+    if (hasPreTokens) {
+      doc.tokens_text = (note.search_tokens || []).join(' ')
+    } else {
+      doc.searchable_text = note.searchable_text || note.excerpt || ''
+    }
+    docs.push(doc)
   }
 
   index.addAll(docs)

@@ -26,8 +26,9 @@ export function extractFacets(notes) {
     if (type) {
       typeCounts[type] = (typeCounts[type] || 0) + 1
     }
-    // Tag facet
-    for (const tag of (note.tags || [])) {
+    // Tag facet (merge manual tags + AI tags)
+    const allTags = new Set([...(note.tags || []), ...(note.ai_tags || [])])
+    for (const tag of allTags) {
       tagCounts[tag] = (tagCounts[tag] || 0) + 1
     }
   }
@@ -66,9 +67,9 @@ export function applyFacets(notes, facets) {
       if (!facets.types.includes(noteType)) return false
     }
 
-    // Tag filter (OR within dimension)
+    // Tag filter (OR within dimension, matches both manual and AI tags)
     if (facets.tags?.length) {
-      const noteTags = note.tags || []
+      const noteTags = [...(note.tags || []), ...(note.ai_tags || [])]
       if (!facets.tags.some(t => noteTags.includes(t))) return false
     }
 

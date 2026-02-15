@@ -23,10 +23,13 @@ function formatDate(dateStr) {
 }
 
 export function NoteCard({ note, onClick }) {
-  const tags = note.tags || []
-  const displayTags = tags.slice(0, MAX_TAGS)
-  const overflowCount = tags.length - MAX_TAGS
+  const manualTags = note.tags || []
+  const aiTags = (note.ai_tags || []).filter(t => !manualTags.includes(t))
+  const allTags = [...manualTags, ...aiTags]
+  const displayTags = allTags.slice(0, MAX_TAGS)
+  const overflowCount = allTags.length - MAX_TAGS
   const isHtml = note.format === 'html'
+  const manualTagSet = new Set(manualTags)
 
   const excerpt = (note.excerpt || '').slice(0, MAX_EXCERPT)
 
@@ -62,7 +65,11 @@ export function NoteCard({ note, onClick }) {
       {displayTags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-auto">
           {displayTags.map(tag => (
-            <span key={tag} className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
+            <span key={tag} className={`px-2 py-0.5 text-xs rounded-full ${
+              manualTagSet.has(tag)
+                ? 'bg-gray-100 text-gray-600'
+                : 'bg-violet-50 text-violet-500 border border-violet-200'
+            }`}>
               {tag}
             </span>
           ))}

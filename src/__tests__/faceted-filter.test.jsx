@@ -25,6 +25,18 @@ describe('extractFacets', () => {
     const facets = extractFacets(mockNotes)
     expect(facets.types.find(t => t.value === 'report')).toBeDefined()
   })
+
+  it('merges ai_tags into tag facets', () => {
+    const notesWithAiTags = [
+      ...mockNotes,
+      { id: '6', note_type: 'learning', tags: ['react'], ai_tags: ['前端', 'hooks'], created_at: '2026-02-15T10:00:00Z' },
+    ]
+    const facets = extractFacets(notesWithAiTags)
+    expect(facets.tags.find(t => t.value === '前端')).toBeDefined()
+    expect(facets.tags.find(t => t.value === 'hooks')).toBeDefined()
+    // react appears in notes 2, 3, and 6 (3 notes total)
+    expect(facets.tags.find(t => t.value === 'react').count).toBe(3)
+  })
 })
 
 describe('applyFacets', () => {
@@ -64,5 +76,15 @@ describe('applyFacets', () => {
     const result = applyFacets(mockNotes, { types: ['report'] })
     expect(result.length).toBe(1)
     expect(result[0].id).toBe('5')
+  })
+
+  it('matches ai_tags when filtering by tags', () => {
+    const notesWithAiTags = [
+      { id: '1', tags: ['react'], ai_tags: ['前端'], created_at: '2026-02-15T10:00:00Z' },
+      { id: '2', tags: ['python'], created_at: '2026-02-15T10:00:00Z' },
+    ]
+    const result = applyFacets(notesWithAiTags, { tags: ['前端'] })
+    expect(result.length).toBe(1)
+    expect(result[0].id).toBe('1')
   })
 })
