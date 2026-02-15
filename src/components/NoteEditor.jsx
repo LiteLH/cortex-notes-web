@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useNotes } from '../contexts/NotesContext.jsx'
@@ -15,6 +15,25 @@ export function NoteEditor() {
   const [saving, setSaving] = useState(false)
   const [originalCreatedAt, setOriginalCreatedAt] = useState(null)
   const [originalPath, setOriginalPath] = useState(null)
+
+  // Track if content has been modified
+  const isDirty = title.trim() !== '' || content.trim() !== ''
+
+  // Warn before browser close/refresh if there are unsaved changes
+  useEffect(() => {
+    if (!isDirty) return
+    const handler = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
+
+  const handleCancel = useCallback(() => {
+    if (isDirty && !window.confirm('有未儲存的內容，確定要離開嗎？')) return
+    navigate(-1)
+  }, [isDirty, navigate])
 
   useEffect(() => {
     if (id) {
@@ -63,7 +82,7 @@ export function NoteEditor() {
     <div className="flex flex-col h-full bg-white md:bg-gray-50/50">
       <div className="md:max-w-3xl md:mx-auto md:my-8 md:bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 w-full h-full flex flex-col overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
-          <button onClick={() => navigate(-1)} className="text-gray-500 hover:text-gray-900">取消</button>
+          <button onClick={handleCancel} className="text-gray-500 hover:text-gray-900">取消</button>
           <button
             disabled={saving}
             onClick={handleSave}

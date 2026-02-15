@@ -83,7 +83,7 @@ export function Calendar({ notes, onDateClick }) {
           ${isToday ? 'font-bold ring-2 ring-blue-400' : ''}
           ${hasNotes ? 'cursor-pointer hover:bg-blue-50 text-gray-900' : 'text-gray-300 cursor-default'}
         `}
-        title={hasNotes ? `${count} 筆筆記` : undefined}
+        title={hasNotes ? `${count} 筆筆記` : '這天沒有筆記'}
       >
         {day}
         {hasNotes && (

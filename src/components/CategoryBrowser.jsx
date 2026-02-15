@@ -148,10 +148,11 @@ export function CategoryBrowser() {
           </div>
         )}
         
-        <div className="space-y-2">
+        <div className="space-y-2" role="list" aria-label="筆記列表">
           {displayNotes.map(note => (
             <div
               key={note.id}
+              role="listitem"
               onClick={() => navigate(`/note/${note.id}`)}
               className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm cursor-pointer transition"
             >
@@ -182,7 +183,7 @@ export function CategoryBrowser() {
         <p className="text-gray-500 text-sm mt-1">按主題整理的筆記</p>
       </div>
       
-      <div className="grid gap-4">
+      <div className="grid gap-4" role="list" aria-label="分類列表">
         {Object.entries(CATEGORIES).map(([key, catInfo]) => {
           const catData = notesByCategory[key] || { notes: [], subcategories: {} };
           const totalNotes = catData.notes.length + 
@@ -203,6 +204,7 @@ export function CategoryBrowser() {
           return (
             <div
               key={key}
+              role="listitem"
               onClick={() => navigate(`/browse/${key}`)}
               className={`p-4 border rounded-xl cursor-pointer transition ${colorClasses[catInfo.color] || colorClasses.gray}`}
             >

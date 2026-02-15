@@ -5,7 +5,7 @@ import { SearchBar } from './SearchBar.jsx'
 import { TagFilter, filterByTags } from './TagFilter.jsx'
 import { CardGrid } from './CardGrid.jsx'
 import { Calendar } from './Calendar.jsx'
-import { Book, X } from 'lucide-react'
+import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
 
 function TimelineCard({ note, onClick }) {
@@ -67,6 +67,7 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState([])
   const [dateFilter, setDateFilter] = useState(null)
+  const [calendarOpen, setCalendarOpen] = useState(false)
 
   // Group notes by time
   const timeline = useMemo(() => {
@@ -147,7 +148,7 @@ export function Home() {
       {/* Mobile Header */}
       <div className="flex justify-between items-center mb-8 md:hidden">
         <h1 className="text-2xl font-bold text-gray-900">我的筆記</h1>
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
+        <div role="img" aria-label="使用者頭像" className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
           ME
         </div>
       </div>
@@ -157,13 +158,26 @@ export function Home() {
         <SearchBar onResults={handleSearchResults} onClear={handleSearchClear} />
       </div>
 
-      {/* Calendar + Monthly Summary */}
+      {/* Calendar + Monthly Summary (collapsible) */}
       <div className="mb-6 hidden md:block">
-        <Calendar notes={safeNotes} onDateClick={handleDateClick} />
-        {monthlySummary.total > 0 && (
-          <p className="text-xs text-gray-400 mt-2 text-center">
-            本月新增 {monthlySummary.total} 筆{monthlySummary.reports > 0 ? ` · ${monthlySummary.reports} 份報告` : ''}
-          </p>
+        <button
+          onClick={() => setCalendarOpen(o => !o)}
+          className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 rounded-lg transition-colors"
+        >
+          <span>
+            📅 月曆
+            {monthlySummary.total > 0 && (
+              <span className="ml-2 text-xs text-gray-400">
+                本月 {monthlySummary.total} 筆{monthlySummary.reports > 0 ? ` · ${monthlySummary.reports} 份報告` : ''}
+              </span>
+            )}
+          </span>
+          {calendarOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+        {calendarOpen && (
+          <div className="mt-2">
+            <Calendar notes={safeNotes} onDateClick={handleDateClick} />
+          </div>
         )}
       </div>
 
