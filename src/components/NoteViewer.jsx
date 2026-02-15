@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useNotes } from '../contexts/NotesContext.jsx'
 import { HtmlRenderer } from './HtmlRenderer.jsx'
-import { createSearchIndex, searchNotes } from '../lib/search.js'
+import { findRelatedNotes } from '../lib/related.js'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
@@ -82,16 +82,10 @@ export function NoteViewer() {
     }
   }
 
-  // Related notes via MiniSearch (must be before early returns to keep hook order stable)
+  // Related notes via weighted multi-factor scoring (must be before early returns to keep hook order stable)
   const relatedNotes = useMemo(() => {
     if (!notes.length || !note) return []
-    const index = createSearchIndex(notes)
-    const query = [note.title, ...(note.tags || [])].join(' ')
-    return searchNotes(index, query)
-      .filter(r => r.id !== note.id)
-      .slice(0, 5)
-      .map(r => notes.find(n => n.id === r.id))
-      .filter(Boolean)
+    return findRelatedNotes(note, notes, 5)
   }, [notes, note])
 
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
