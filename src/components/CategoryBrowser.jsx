@@ -13,7 +13,6 @@ const CATEGORIES = {
       'career': { label: '💼 職涯', icon: Briefcase },
       'hardware': { label: '🔧 硬體', icon: Cpu },
       'ai-tools': { label: '🤖 AI 工具', icon: Wrench },
-      'openclaw': { label: '🐾 OpenClaw', icon: Wrench },
     }
   },
   'projects': {
@@ -41,16 +40,7 @@ const CATEGORIES = {
     color: 'orange',
     subcategories: {}
   },
-  'yachiyo': {
-    label: '🌙 八千代',
-    description: '任務系統',
-    icon: Folder,
-    color: 'indigo',
-    subcategories: {
-      'REPORTS': { label: '📊 報告', icon: FileText },
-    }
-  },
-  'inbox': {
+'inbox': {
     label: '📥 Inbox',
     description: '未分類',
     icon: Inbox,
@@ -258,7 +248,7 @@ export function CategoryNav({ notes, onNavigate }) {
     return result;
   }, [safeNotes]);
   
-  const mainCategories = ['areas', 'projects', 'resources', 'yachiyo'];
+  const mainCategories = ['areas', 'projects', 'resources'];
   
   return (
     <div className="space-y-1">

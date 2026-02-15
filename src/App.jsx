@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { GitHubService } from './lib/github';
-import { YachiyoTaskPanel } from './components/YachiyoTaskPanel';
+
 import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
 import { HtmlRenderer } from './components/HtmlRenderer';
 import {
   Book, Plus, Search, Menu, LogOut, Loader2, Save, 
   Home as HomeIcon, FileText, Lock, Folder, Tag, Hash, 
   LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
-  Command, Calendar, ArrowRight, Star, Moon, FolderOpen
+  Command, Calendar, ArrowRight, Star, FolderOpen
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { clsx } from 'clsx';
@@ -182,7 +182,7 @@ function App() {
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
             <Routes>
               <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
-              <Route path="/yachiyo" element={<YachiyoPage service={service} />} />
+
               <Route path="/browse" element={<CategoryBrowser notes={notes} />} />
               <Route path="/browse/:category" element={<CategoryBrowser notes={notes} />} />
               <Route path="/browse/:category/:subcategory" element={<CategoryBrowser notes={notes} />} />
@@ -307,15 +307,7 @@ function Sidebar({ notes, service, onLogout, onOpenCmd, className = "" }) {
             </div>
         </div>
 
-        {/* Section: Yachiyo */}
-        <div>
-            <div className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2 px-2">🌙 八千代</div>
-            <div className="space-y-0.5">
-                <SidebarItem icon={Moon} label="任務欄" active={isActive('/yachiyo')} onClick={() => navigate('/yachiyo')} />
-            </div>
-        </div>
-
-        {/* Section: Browse */}
+{/* Section: Browse */}
         <div>
             <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">分類瀏覽</div>
             <div className="space-y-0.5">
@@ -407,25 +399,6 @@ function MobileNav({ refreshNotes, onOpenCmd }) {
         <Folder size={22} />
       </button>
       
-      {/* Yachiyo Task Panel */}
-      <button onClick={() => navigate('/yachiyo')} className={`flex flex-col items-center gap-0.5 p-2 ${isActive('/yachiyo')}`}>
-        <Moon size={22} />
-      </button>
-    </div>
-  );
-}
-
-// Yachiyo Task Page
-function YachiyoPage({ service }) {
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-6 md:py-10 pb-24">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <span className="text-3xl">🌙</span> 八千代任務欄
-        </h1>
-        <p className="text-gray-500 text-sm mt-1">在這裡寫下任務，八千代會自動執行</p>
-      </div>
-      <YachiyoTaskPanel service={service} />
     </div>
   );
 }
@@ -477,24 +450,7 @@ function Home({ notes, service, onOpenCmd }) {
          <span className="text-gray-400 text-lg font-light">What's on your mind?</span>
        </div>
 
-       {/* Yachiyo Quick Card */}
-       <div 
-         onClick={() => navigate('/yachiyo')}
-         className="mb-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-4 cursor-pointer hover:shadow-lg hover:shadow-indigo-200 transition-all group"
-       >
-         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
-             <Moon size={20} className="text-white" />
-           </div>
-           <div className="flex-1">
-             <h3 className="font-bold text-white">🌙 八千代任務欄</h3>
-             <p className="text-indigo-100 text-sm">點擊寫任務，自動執行</p>
-           </div>
-           <ArrowRight className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
-         </div>
-       </div>
-
-       {/* Timeline */}
+{/* Timeline */}
        <div className="space-y-8">
          {Object.entries(timeline).map(([label, group]) => (
             group.length > 0 && (
