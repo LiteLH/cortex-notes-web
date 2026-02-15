@@ -10,7 +10,7 @@ import {
   LayoutGrid, List as ListIcon, Clock, ChevronRight, ChevronDown,
   Command, Calendar, ArrowRight, Star, FolderOpen
 } from 'lucide-react';
-import Fuse from 'fuse.js';
+
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, isToday, isYesterday, isThisWeek, parseISO, isValid } from 'date-fns';
