@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotes } from '../contexts/NotesContext.jsx'
 import { SearchBar } from './SearchBar.jsx'
-import { TagFilter, filterByTags } from './TagFilter.jsx'
+import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
 import { CardGrid } from './CardGrid.jsx'
 import { Calendar } from './Calendar.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
@@ -65,7 +65,7 @@ export function Home() {
 
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTags, setSelectedTags] = useState([])
+  const [facets, setFacets] = useState({})
   const [dateFilter, setDateFilter] = useState(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
@@ -102,12 +102,6 @@ export function Home() {
     setSearchQuery('')
   }
 
-  const handleTagToggle = (tag) => {
-    setSelectedTags(prev =>
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    )
-  }
-
   const handleNoteClick = (note) => {
     navigate(`/note/${note.id}`)
   }
@@ -141,7 +135,8 @@ export function Home() {
   // Determine which notes to display
   const isSearching = searchResults !== null
   const baseNotes = isSearching ? searchResults : dateFilteredNotes
-  const displayNotes = filterByTags(baseNotes, selectedTags)
+  const displayNotes = applyFacets(baseNotes, facets)
+  const hasAnyFacet = facets.types?.length || facets.tags?.length || facets.timeRange
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
@@ -191,9 +186,9 @@ export function Home() {
         </div>
       )}
 
-      {/* Tag Filter */}
+      {/* Faceted Filter */}
       <div className="mb-6">
-        <TagFilter notes={isSearching ? searchResults : dateFilteredNotes} selectedTags={selectedTags} onToggle={handleTagToggle} />
+        <FacetedFilter notes={isSearching ? searchResults : dateFilteredNotes} facets={facets} onFacetsChange={setFacets} />
       </div>
 
       {/* Search Results (CardGrid) */}
@@ -204,7 +199,7 @@ export function Home() {
           </h2>
           <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="找不到符合的筆記" />
         </div>
-      ) : selectedTags.length > 0 || dateFilter ? (
+      ) : hasAnyFacet || dateFilter ? (
         /* Filtered by tags or date — show as CardGrid */
         <div>
           <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
