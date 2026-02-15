@@ -3,61 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { useNotes } from '../contexts/NotesContext.jsx'
 import { SearchBar } from './SearchBar.jsx'
 import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
-import { CardGrid } from './CardGrid.jsx'
 import { Calendar } from './Calendar.jsx'
 import { ReviewSection } from './ReviewSection.jsx'
 import { RediscoverySection } from './RediscoverySection.jsx'
+import { ViewModeSelector } from './ViewModeSelector.jsx'
+import { InsightBar } from './InsightBar.jsx'
+import { useDisplayConfig } from '../hooks/useDisplayConfig.js'
+import { CompactListRenderer } from './renderers/CompactListRenderer.jsx'
+import { SmallCardRenderer } from './renderers/SmallCardRenderer.jsx'
+import { SortableListRenderer } from './renderers/SortableListRenderer.jsx'
+import { TimelineRenderer } from './renderers/TimelineRenderer.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
-import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
-
-const TIMELINE_TYPE_BADGE = {
-  decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
-  learning: { label: '學習', color: 'text-green-600 bg-green-50' },
-  meeting: { label: '會議', color: 'text-blue-600 bg-blue-50' },
-  thought: { label: '想法', color: 'text-gray-600 bg-gray-100' },
-  memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
-}
-
-function TimelineCard({ note, onClick }) {
-  const safeTags = Array.isArray(note.tags) ? note.tags : []
-  const isHtml = note.format === 'html'
-  const badge = isHtml
-    ? { label: '報告', color: 'text-purple-500 bg-purple-50' }
-    : TIMELINE_TYPE_BADGE[note.note_type] || null
-  const safeDate = note.created_at ? new Date(note.created_at) : new Date()
-  const timeStr = isValid(safeDate) ? format(safeDate, 'HH:mm') : '--:--'
-
-  return (
-    <div
-      onClick={onClick}
-      className="group relative bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] hover:shadow-lg hover:border-blue-100 hover:-translate-y-0.5 transition-all cursor-pointer"
-    >
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex gap-2 items-center">
-          {badge && <span className={`${badge.color} p-1 rounded text-xs font-bold`}>{badge.label}</span>}
-          <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
-            {note.title || "無標題"}
-          </h3>
-        </div>
-        <span className="text-[10px] text-gray-400 font-mono">
-          {timeStr}
-        </span>
-      </div>
-
-      <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
-        {note.excerpt || "尚無預覽內容..."}
-      </p>
-
-      <div className="flex items-center gap-2">
-        {safeTags.slice(0, 3).map(tag => (
-          <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
-            #{tag}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 function SkeletonCard() {
   return (
@@ -69,10 +25,18 @@ function SkeletonCard() {
   )
 }
 
+const RENDERERS = {
+  compact: CompactListRenderer,
+  card: SmallCardRenderer,
+  sortable: SortableListRenderer,
+  timeline: TimelineRenderer,
+}
+
 export function Home() {
   const navigate = useNavigate()
-  const { notes, isLoading } = useNotes()
+  const { notes, stats, isLoading } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
+  const { config, setMode } = useDisplayConfig()
 
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -80,74 +44,41 @@ export function Home() {
   const [dateFilter, setDateFilter] = useState(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
 
-  // Group notes by time
-  const timeline = useMemo(() => {
-    const groups = { '今天': [], '昨天': [], '本週': [], '更早': [] }
-
-    safeNotes.forEach(note => {
-      try {
-        const date = parseISO(note.created_at || '')
-        if (!isValid(date)) {
-          groups['更早'].push(note)
-          return
-        }
-        if (isToday(date)) groups['今天'].push(note)
-        else if (isYesterday(date)) groups['昨天'].push(note)
-        else if (isThisWeek(date)) groups['本週'].push(note)
-        else groups['更早'].push(note)
-      } catch {
-        groups['更早'].push(note)
-      }
-    })
-
-    return groups
-  }, [safeNotes])
+  // Monthly summary (fallback if stats not available)
+  const monthlySummary = useMemo(() => {
+    if (stats) return { total: stats.last_30_days_count, reports: 0 }
+    const now = new Date()
+    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const thisMonth = safeNotes.filter(n => n.created_at?.startsWith(monthPrefix))
+    return { total: thisMonth.length, reports: 0 }
+  }, [safeNotes, stats])
 
   const handleSearchResults = (results, query) => {
     setSearchResults(results)
     setSearchQuery(query)
   }
+  const handleSearchClear = () => { setSearchResults(null); setSearchQuery('') }
+  const handleNoteClick = (note) => navigate(`/note/${note.id}`)
+  const handleDateClick = (dateStr) => setDateFilter(dateStr)
+  const clearDateFilter = () => setDateFilter(null)
 
-  const handleSearchClear = () => {
-    setSearchResults(null)
-    setSearchQuery('')
-  }
-
-  const handleNoteClick = (note) => {
-    navigate(`/note/${note.id}`)
-  }
-
-  const handleDateClick = (dateStr) => {
-    setDateFilter(dateStr)
-  }
-
-  const clearDateFilter = () => {
-    setDateFilter(null)
-  }
-
-  // Filter by date if active
+  // Filter by date
   const dateFilteredNotes = useMemo(() => {
     if (!dateFilter) return safeNotes
-    return safeNotes.filter(note => {
-      if (!note.created_at) return false
-      return note.created_at.startsWith(dateFilter)
-    })
+    return safeNotes.filter(note => note.created_at?.startsWith(dateFilter))
   }, [safeNotes, dateFilter])
 
-  // Monthly summary
-  const monthlySummary = useMemo(() => {
-    const now = new Date()
-    const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const thisMonth = safeNotes.filter(n => n.created_at && n.created_at.startsWith(monthPrefix))
-    const reports = thisMonth.filter(n => n.format === 'html' || (n.tags || []).some(t => ['report', 'research'].includes(t)))
-    return { total: thisMonth.length, reports: reports.length }
-  }, [safeNotes])
-
-  // Determine which notes to display
+  // Determine display notes
   const isSearching = searchResults !== null
   const baseNotes = isSearching ? searchResults : dateFilteredNotes
   const displayNotes = applyFacets(baseNotes, facets)
   const hasAnyFacet = facets.types?.length || facets.tags?.length || facets.timeRange
+
+  // Pick renderer — on mobile, sortable falls back to compact
+  const effectiveMode = config.mode === 'sortable' && typeof window !== 'undefined' && window.innerWidth < 768
+    ? 'compact'
+    : config.mode
+  const Renderer = RENDERERS[effectiveMode] || CompactListRenderer
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
@@ -164,13 +95,18 @@ export function Home() {
         <SearchBar onResults={handleSearchResults} onClear={handleSearchClear} />
       </div>
 
+      {/* Insight Bar */}
+      <div className="mb-4">
+        <InsightBar stats={stats} />
+      </div>
+
       {/* Today's Review */}
       {!isSearching && <ReviewSection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
       {/* Rediscovery */}
       {!isSearching && <RediscoverySection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
-      {/* Calendar + Monthly Summary (collapsible) */}
+      {/* Calendar (collapsible, desktop) */}
       <div className="mb-6 hidden md:block">
         <button
           onClick={() => setCalendarOpen(o => !o)}
@@ -180,7 +116,7 @@ export function Home() {
             📅 月曆
             {monthlySummary.total > 0 && (
               <span className="ml-2 text-xs text-gray-400">
-                本月 {monthlySummary.total} 筆{monthlySummary.reports > 0 ? ` · ${monthlySummary.reports} 份報告` : ''}
+                本月 {monthlySummary.total} 筆
               </span>
             )}
           </span>
@@ -197,65 +133,48 @@ export function Home() {
       {dateFilter && (
         <div className="mb-4 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
           <span>顯示 {dateFilter} 的筆記（{dateFilteredNotes.length} 筆）</span>
-          <button onClick={clearDateFilter} className="ml-auto hover:bg-blue-100 rounded p-0.5">
-            <X size={14} />
-          </button>
+          <button onClick={clearDateFilter} className="ml-auto hover:bg-blue-100 rounded p-0.5"><X size={14} /></button>
         </div>
       )}
 
-      {/* Faceted Filter */}
-      <div className="mb-6">
-        <FacetedFilter notes={isSearching ? searchResults : dateFilteredNotes} facets={facets} onFacetsChange={setFacets} />
+      {/* Faceted Filter + View Mode Selector */}
+      <div className="mb-6 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 overflow-hidden">
+            <FacetedFilter notes={isSearching ? searchResults : dateFilteredNotes} facets={facets} onFacetsChange={setFacets} />
+          </div>
+          <ViewModeSelector mode={config.mode} onModeChange={setMode} />
+        </div>
       </div>
 
-      {/* Search Results (CardGrid) */}
-      {isSearching ? (
-        <div>
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
-            搜尋「{searchQuery}」的結果（{displayNotes.length} 筆）
-          </h2>
-          <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="找不到符合的筆記" />
-        </div>
-      ) : hasAnyFacet || dateFilter ? (
-        /* Filtered by tags or date — show as CardGrid */
-        <div>
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
-            篩選結果（{displayNotes.length} 筆）
-          </h2>
-          <CardGrid notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" />
-        </div>
-      ) : (
-        /* Default: Timeline View */
-        <div className="space-y-8">
-          {Object.entries(timeline).map(([label, group]) => (
-            group.length > 0 && (
-              <div key={label} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">{label}</h2>
-                <div className="space-y-3">
-                  {group.map(note => (
-                    <TimelineCard key={note.id} note={note} onClick={() => navigate(`/note/${note.id}`)} />
-                  ))}
-                </div>
-              </div>
-            )
-          ))}
+      {/* Content */}
+      {isSearching && (
+        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
+          搜尋「{searchQuery}」的結果（{displayNotes.length} 筆）
+        </h2>
+      )}
+      {!isSearching && (hasAnyFacet || dateFilter) && (
+        <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
+          篩選結果（{displayNotes.length} 筆）
+        </h2>
+      )}
 
-          {isLoading && safeNotes.length === 0 && (
-            <div className="space-y-3">
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-          )}
+      <Renderer notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" />
 
-          {!isLoading && safeNotes.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Book size={32} className="opacity-20" />
-              </div>
-              <p>還沒有筆記</p>
-            </div>
-          )}
+      {isLoading && safeNotes.length === 0 && (
+        <div className="space-y-3">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      )}
+
+      {!isLoading && safeNotes.length === 0 && (
+        <div className="text-center py-20 text-gray-400">
+          <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Book size={32} className="opacity-20" />
+          </div>
+          <p>還沒有筆記</p>
         </div>
       )}
     </div>
