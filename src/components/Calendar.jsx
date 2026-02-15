@@ -1,6 +1,13 @@
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+export function getHeatmapColor(count) {
+  if (count === 0) return ''
+  if (count === 1) return 'bg-blue-100'
+  if (count <= 3) return 'bg-blue-200'
+  return 'bg-blue-300'
+}
+
 function getMonthDays(year, month) {
   return new Date(year, month + 1, 0).getDate()
 }
@@ -72,6 +79,7 @@ export function Calendar({ notes, onDateClick }) {
     const count = noteCountByDate[dateStr] || 0
     const isToday = dateStr === todayStr
 
+    const heatmap = getHeatmapColor(count)
     const ariaLabel = `${year}年${month + 1}月${day}日${hasNotes ? `，${count} 筆筆記` : ''}${isToday ? '（今天）' : ''}`
     cells.push(
       <button
@@ -81,14 +89,11 @@ export function Calendar({ notes, onDateClick }) {
         aria-label={ariaLabel}
         className={`relative aspect-square flex items-center justify-center text-sm rounded-lg transition-colors
           ${isToday ? 'font-bold ring-2 ring-blue-400' : ''}
-          ${hasNotes ? 'cursor-pointer hover:bg-blue-50 text-gray-900' : 'text-gray-300 cursor-default'}
+          ${hasNotes ? `cursor-pointer hover:bg-blue-50 text-gray-900 ${heatmap}` : 'text-gray-300 cursor-default'}
         `}
         title={hasNotes ? `${count} 筆筆記` : '這天沒有筆記'}
       >
         {day}
-        {hasNotes && (
-          <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-blue-500" />
-        )}
       </button>
     )
   }
