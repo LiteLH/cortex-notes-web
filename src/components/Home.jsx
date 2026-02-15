@@ -6,6 +6,7 @@ import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
 import { CardGrid } from './CardGrid.jsx'
 import { Calendar } from './Calendar.jsx'
 import { ReviewSection } from './ReviewSection.jsx'
+import { RediscoverySection } from './RediscoverySection.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
 
@@ -156,6 +157,9 @@ export function Home() {
 
       {/* Today's Review */}
       {!isSearching && <ReviewSection notes={safeNotes} onNoteClick={handleNoteClick} />}
+
+      {/* Rediscovery */}
+      {!isSearching && <RediscoverySection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
       {/* Calendar + Monthly Summary (collapsible) */}
       <div className="mb-6 hidden md:block">
