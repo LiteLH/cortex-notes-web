@@ -29,6 +29,12 @@ const DB_REPO_OWNER = "LiteLH"; // Replace with your username if different
 const DB_REPO_NAME = "cortex-notes-db";
 const INDEX_PATH = "index.json";
 
+function assertSafePath(path) {
+  if (!path || path.includes('..') || path.startsWith('/')) {
+    throw new Error(`Unsafe path: ${path}`)
+  }
+}
+
 export class GitHubService {
   constructor(token) {
     this.octokit = new Octokit({ auth: token });
@@ -45,6 +51,7 @@ export class GitHubService {
   }
 
   async getFileContent(path) {
+    assertSafePath(path);
     try {
       const { data } = await this.octokit.rest.repos.getContent({
         owner: DB_REPO_OWNER,
@@ -73,6 +80,7 @@ export class GitHubService {
   }
 
   async getNote(path, format) {
+    assertSafePath(path);
     const file = await this.getFileContent(path);
     if (format === 'html') {
       // HTML files: return raw content, no gray-matter parsing
@@ -100,6 +108,7 @@ export class GitHubService {
     // 2. Determine path
     const year = new Date().getFullYear();
     const path = note.path || `content/${year}/${note.id}.md`;
+    assertSafePath(path);
     
     // 3. Get existing SHA if updating
     let sha = undefined;
@@ -128,6 +137,7 @@ export class GitHubService {
   // updateIndex removed - moved to backend action
 
   async deleteNote(id, path, sha) {
+      if (path) assertSafePath(path);
       if (!path) {
           // Try to guess path - assume created this year if unknown
           path = `content/${new Date().getFullYear()}/${id}.md`;
