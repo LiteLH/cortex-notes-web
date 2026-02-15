@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, Component } from 'react';
 import { HashRouter as Router, Routes, Route, Link, useParams, useNavigate, useLocation } from 'react-router-dom';
-import { GitHubService } from './lib/github';
+import { useAuth } from './contexts/AuthContext.jsx';
 
 import { CategoryBrowser, CategoryNav } from './components/CategoryBrowser';
 import { HtmlRenderer } from './components/HtmlRenderer';
@@ -23,10 +23,10 @@ function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
-// ... (AuthScreen remains same) ...
-function AuthScreen({ onLogin, error }) {
+function AuthScreen() {
   const [input, setInput] = useState('');
-  
+  const { login, authError } = useAuth();
+
   return (
     <div className="flex min-h-screen bg-gray-100 p-4 justify-center items-center">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -35,35 +35,35 @@ function AuthScreen({ onLogin, error }) {
           <h1 className="text-2xl font-bold">私人存取</h1>
           <p className="text-blue-100 text-sm mt-1">解鎖筆記本</p>
         </div>
-        
+
         <div className="p-8">
           <div className="mb-6 text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100">
             <p className="font-semibold mb-1">為什麼需要這個？</p>
             <p>你的筆記儲存在<strong>私人 GitHub 儲存庫</strong>中。需要提供 Personal Access Token (PAT) 才能存取。</p>
           </div>
 
-          {error && (
+          {authError && (
             <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded border border-red-100 flex items-center gap-2">
-              <span>⚠️</span> {error}
+              <span>⚠️</span> {authError}
             </div>
           )}
 
           <label className="block text-sm font-medium text-gray-700 mb-1">GitHub Token</label>
-          <input 
-            type="password" 
-            className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none transition" 
+          <input
+            type="password"
+            className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none transition"
             placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
             value={input}
             onChange={e => setInput(e.target.value)}
           />
-          
-          <button 
-            onClick={() => onLogin(input)}
+
+          <button
+            onClick={() => login(input)}
             className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition shadow-md active:transform active:scale-95"
           >
             解鎖筆記本
           </button>
-          
+
           <div className="mt-6 text-center text-xs text-gray-400">
             <p>Token 儲存在瀏覽器本機。</p>
             <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mt-1 inline-block">
@@ -77,42 +77,26 @@ function AuthScreen({ onLogin, error }) {
 }
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('gh_token') || '');
-  const [service, setService] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authError, setAuthError] = useState(null);
+  const { service, isAuthenticated, isLoading, logout } = useAuth();
   const [notes, setNotes] = useState([]);
-  const [openCmd, setOpenCmd] = useState(false); // Command Palette State
+  const [openCmd, setOpenCmd] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      const gh = new GitHubService(token);
-      gh.verifyToken().then(res => {
-        if (res.valid) {
-          setService(gh);
-          setIsAuthenticated(true);
-          setAuthError(null);
-          gh.getNotesIndex().then(data => {
-              // Safety: Ensure created_at exists and is valid before sorting
-              const safeData = (data || []).map(n => ({
-                  ...n,
-                  created_at: n.created_at || new Date().toISOString()
-              }));
-              
-              const sorted = safeData.sort((a, b) => {
-                  const dateA = new Date(a.created_at);
-                  const dateB = new Date(b.created_at);
-                  return (isValid(dateB) ? dateB : new Date()) - (isValid(dateA) ? dateA : new Date());
-              });
-              setNotes(sorted);
-          });
-        } else {
-          setIsAuthenticated(false);
-          setAuthError(res.error || "Token 無效");
-        }
+    if (service) {
+      service.getNotesIndex().then(data => {
+        const safeData = (data || []).map(n => ({
+          ...n,
+          created_at: n.created_at || new Date().toISOString()
+        }));
+        const sorted = safeData.sort((a, b) => {
+          const dateA = new Date(a.created_at);
+          const dateB = new Date(b.created_at);
+          return (isValid(dateB) ? dateB : new Date()) - (isValid(dateA) ? dateA : new Date());
+        });
+        setNotes(sorted);
       });
     }
-  }, [token]);
+  }, [service]);
 
   // Command Palette Shortcut
   useEffect(() => {
@@ -126,77 +110,65 @@ function App() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const handleLogin = (t) => {
-    if (!t.trim()) {
-        setAuthError("Token 不能為空");
-        return;
-    }
-    localStorage.setItem('gh_token', t);
-    setToken(t);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('gh_token');
-    setToken('');
-    setService(null);
-    setIsAuthenticated(false);
-    setAuthError(null);
-    setNotes([]);
-  };
-
   const refreshNotes = () => {
     if (service) {
-        service.getNotesIndex().then(data => {
-            const safeData = (data || []).map(n => ({
-                  ...n,
-                  created_at: n.created_at || new Date().toISOString()
-            }));
-            const sorted = safeData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            setNotes(sorted);
-        });
+      service.getNotesIndex().then(data => {
+        const safeData = (data || []).map(n => ({
+          ...n,
+          created_at: n.created_at || new Date().toISOString()
+        }));
+        const sorted = safeData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        setNotes(sorted);
+      });
     }
   };
 
   const handleSaveNote = (newNote) => {
-      setNotes(prev => {
-          const filtered = prev.filter(n => n.id !== newNote.id);
-          return [newNote, ...filtered];
-      });
+    setNotes(prev => {
+      const filtered = prev.filter(n => n.id !== newNote.id);
+      return [newNote, ...filtered];
+    });
   };
 
   const handleDeleteNote = (id) => {
-      setNotes(prev => prev.filter(n => n.id !== id));
+    setNotes(prev => prev.filter(n => n.id !== id));
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="animate-spin text-blue-600" size={32} />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
-    return <AuthScreen onLogin={handleLogin} error={authError} />;
+    return <AuthScreen />;
   }
 
   return (
     <Router>
       <div className="flex h-screen bg-gray-50 text-gray-900 font-sans flex-col md:flex-row overflow-hidden">
-        <Sidebar 
-            notes={notes} 
-            service={service}
-            onLogout={handleLogout} 
-            onOpenCmd={() => setOpenCmd(true)}
-            className="hidden md:flex" 
+        <Sidebar
+          notes={notes}
+          service={service}
+          onLogout={logout}
+          onOpenCmd={() => setOpenCmd(true)}
+          className="hidden md:flex"
         />
         <main className="flex-1 overflow-auto mb-16 md:mb-0 relative bg-white md:bg-gray-50/50">
-            <Routes>
-              <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
-
-              <Route path="/browse" element={<CategoryBrowser notes={notes} />} />
-              <Route path="/browse/:category" element={<CategoryBrowser notes={notes} />} />
-              <Route path="/browse/:category/:subcategory" element={<CategoryBrowser notes={notes} />} />
-              <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
-              <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
-              <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
-            </Routes>
+          <Routes>
+            <Route path="/" element={<Home notes={notes} service={service} refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />} />
+            <Route path="/browse" element={<CategoryBrowser notes={notes} />} />
+            <Route path="/browse/:category" element={<CategoryBrowser notes={notes} />} />
+            <Route path="/browse/:category/:subcategory" element={<CategoryBrowser notes={notes} />} />
+            <Route path="/note/:id" element={<NoteViewer service={service} notes={notes} onDelete={handleDeleteNote} />} />
+            <Route path="/new" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
+            <Route path="/edit/:id" element={<NoteEditor service={service} onSave={handleSaveNote} refreshNotes={refreshNotes} />} />
+          </Routes>
         </main>
         <MobileNav refreshNotes={refreshNotes} onOpenCmd={() => setOpenCmd(true)} />
-        
-        {/* Global Command Palette */}
+
         {openCmd && <CommandPalette open={openCmd} onOpenChange={setOpenCmd} notes={notes} />}
       </div>
     </Router>
