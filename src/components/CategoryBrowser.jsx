@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Folder, FileText, ChevronRight, Briefcase, Cpu, Wrench, BookOpen, Calendar, Inbox, Archive } from 'lucide-react';
+import { Folder, FileText, ChevronRight, Briefcase, Cpu, Wrench, BookOpen, Calendar, Inbox, Archive, Globe } from 'lucide-react';
 import { useNotes } from '../contexts/NotesContext.jsx';
 
 // 分類定義
@@ -46,6 +46,20 @@ const CATEGORIES = {
     description: '未分類',
     icon: Inbox,
     color: 'gray',
+    subcategories: {}
+  },
+  'reports': {
+    label: '📊 報告',
+    description: 'AI 研究與審查報告',
+    icon: Globe,
+    color: 'indigo',
+    subcategories: {}
+  },
+  'notes': {
+    label: '📝 筆記',
+    description: '每日摘要與決策記錄',
+    icon: FileText,
+    color: 'orange',
     subcategories: {}
   },
   'content': {
