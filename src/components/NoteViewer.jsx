@@ -8,6 +8,7 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { Loader2, ArrowRight, FileText } from 'lucide-react'
+import { StalenessIndicator } from './StalenessIndicator.jsx'
 import { isValid } from 'date-fns'
 
 export function NoteViewer() {
@@ -129,6 +130,7 @@ export function NoteViewer() {
       </div>
 
       <div className="px-6 py-8">
+        <StalenessIndicator note={note} />
         <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
         <div className="flex flex-wrap gap-2 mb-8">
           {Array.isArray(note.tags) && note.tags.map(t => (
