@@ -72,11 +72,13 @@ export function Calendar({ notes, onDateClick }) {
     const count = noteCountByDate[dateStr] || 0
     const isToday = dateStr === todayStr
 
+    const ariaLabel = `${year}年${month + 1}月${day}日${hasNotes ? `，${count} 筆筆記` : ''}${isToday ? '（今天）' : ''}`
     cells.push(
       <button
         key={day}
         onClick={() => hasNotes && onDateClick?.(dateStr)}
         disabled={!hasNotes}
+        aria-label={ariaLabel}
         className={`relative aspect-square flex items-center justify-center text-sm rounded-lg transition-colors
           ${isToday ? 'font-bold ring-2 ring-blue-400' : ''}
           ${hasNotes ? 'cursor-pointer hover:bg-blue-50 text-gray-900' : 'text-gray-300 cursor-default'}
@@ -94,13 +96,13 @@ export function Calendar({ notes, onDateClick }) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-3">
-        <button onClick={goPrev} className="p-1 hover:bg-gray-100 rounded">
+        <button onClick={goPrev} aria-label="上個月" className="p-1 hover:bg-gray-100 rounded">
           <ChevronLeft size={18} />
         </button>
         <h3 className="text-sm font-medium text-gray-700">
           {MONTH_NAMES[month]} {year}
         </h3>
-        <button onClick={goNext} className="p-1 hover:bg-gray-100 rounded">
+        <button onClick={goNext} aria-label="下個月" className="p-1 hover:bg-gray-100 rounded">
           <ChevronRight size={18} />
         </button>
       </div>

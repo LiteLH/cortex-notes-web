@@ -19,12 +19,18 @@ export function createSearchIndex(notes) {
     },
   })
 
-  const docs = notes.map(note => ({
-    id: note.id,
-    title: note.title || '',
-    searchable_text: note.searchable_text || note.excerpt || '',
-    tags_text: (note.tags || []).join(' '),
-  }))
+  const seen = new Set()
+  const docs = []
+  for (const note of notes) {
+    if (seen.has(note.id)) continue
+    seen.add(note.id)
+    docs.push({
+      id: note.id,
+      title: note.title || '',
+      searchable_text: note.searchable_text || note.excerpt || '',
+      tags_text: (note.tags || []).join(' '),
+    })
+  }
 
   index.addAll(docs)
   return index

@@ -81,6 +81,18 @@ export function NoteViewer() {
     }
   }
 
+  // Related notes via MiniSearch (must be before early returns to keep hook order stable)
+  const relatedNotes = useMemo(() => {
+    if (!notes.length || !note) return []
+    const index = createSearchIndex(notes)
+    const query = [note.title, ...(note.tags || [])].join(' ')
+    return searchNotes(index, query)
+      .filter(r => r.id !== note.id)
+      .slice(0, 5)
+      .map(r => notes.find(n => n.id === r.id))
+      .filter(Boolean)
+  }, [notes, note])
+
   if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
   if (error) return (
     <div className="p-8 text-center">
@@ -92,18 +104,6 @@ export function NoteViewer() {
 
   const isHtml = note.format === 'html'
   const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/')
-
-  // Related notes via MiniSearch
-  const relatedNotes = useMemo(() => {
-    if (!notes.length || !note) return []
-    const index = createSearchIndex(notes)
-    const query = [note.title, ...(note.tags || [])].join(' ')
-    return searchNotes(index, query)
-      .filter(r => r.id !== note.id)
-      .slice(0, 5)
-      .map(r => notes.find(n => n.id === r.id))
-      .filter(Boolean)
-  }, [notes, note])
 
   return (
     <div className={isValidHtmlPath

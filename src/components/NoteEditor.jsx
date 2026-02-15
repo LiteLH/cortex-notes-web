@@ -74,7 +74,7 @@ export function NoteEditor() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white">
+        <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white flex flex-col">
           <input
             className="w-full text-3xl md:text-4xl font-bold mb-6 outline-none placeholder:text-gray-200"
             placeholder="標題"
@@ -93,7 +93,7 @@ export function NoteEditor() {
           </div>
 
           <textarea
-            className="w-full h-[calc(100%-200px)] resize-none outline-none text-lg leading-relaxed text-gray-700 placeholder:text-gray-200 font-serif"
+            className="w-full flex-1 min-h-[200px] resize-none outline-none text-lg leading-relaxed text-gray-700 placeholder:text-gray-200 font-serif"
             placeholder="開始寫作..."
             value={content}
             onChange={e => setContent(e.target.value)}

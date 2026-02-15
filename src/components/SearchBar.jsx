@@ -85,6 +85,7 @@ export function SearchBar({ onResults, onClear }) {
       {query && (
         <button
           onClick={() => { setQuery(''); onClear?.() }}
+          aria-label="清除搜尋"
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >
           <X size={16} />
