@@ -36,6 +36,8 @@ export function NoteEditor() {
     navigate(-1)
   }, [isDirty, navigate])
 
+  // Use SWR-cached notes instead of calling getNotesIndex() again.
+  // index.json is ~450KB; redundant fetches add 1-3s on mobile.
   useEffect(() => {
     if (!id || !service) return
     const safeNotes = Array.isArray(notes) ? notes : []

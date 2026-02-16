@@ -23,8 +23,8 @@ export function NotesProvider({ children }) {
       return { notes, stats }
     },
     {
-      revalidateOnFocus: false,
-      dedupingInterval: 60000, // 1 min dedup
+      revalidateOnFocus: false,  // Won't auto-refresh when switching back to app; use refreshNotes() to retry manually
+      dedupingInterval: 60000,   // 1 min dedup
     }
   )
 

@@ -21,6 +21,8 @@ export function NoteViewer() {
   const [error, setError] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Use SWR-cached notes instead of calling getNotesIndex() again.
+  // index.json is ~450KB; redundant fetches add 1-3s on mobile.
   useEffect(() => {
     if (!service || !notes.length) return
     setLoading(true)
