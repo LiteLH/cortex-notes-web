@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext.jsx'
 import { useNotes } from '../contexts/NotesContext.jsx'
 import { SearchBar } from './SearchBar.jsx'
 import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
@@ -34,6 +35,7 @@ const RENDERERS = {
 
 export function Home() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const { notes, stats, isLoading } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
   const { config, setMode } = useDisplayConfig()
@@ -85,9 +87,9 @@ export function Home() {
       {/* Mobile Header */}
       <div className="flex justify-between items-center mb-8 md:hidden">
         <h1 className="text-2xl font-bold text-gray-900">我的筆記</h1>
-        <div role="img" aria-label="使用者頭像" className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">
+        <button onClick={logout} aria-label="登出" className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors">
           ME
-        </div>
+        </button>
       </div>
 
       {/* Search Bar */}
