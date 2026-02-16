@@ -1,6 +1,7 @@
 import { createContext, useContext, useCallback, useMemo } from 'react'
 import useSWR from 'swr'
 import { useAuth } from './AuthContext.jsx'
+import { createSearchIndex } from '../lib/search.js'
 
 const NotesContext = createContext(null)
 
@@ -30,6 +31,13 @@ export function NotesProvider({ children }) {
 
   const refreshNotes = useCallback(() => mutate(), [mutate])
 
+  // Centralized MiniSearch index — built once, shared by SearchBar + related.js
+  const searchIndex = useMemo(() => {
+    const notesList = data?.notes || []
+    if (!notesList.length) return null
+    return createSearchIndex(notesList)
+  }, [data])
+
   // Optimistic update: add/update a note in local cache
   const optimisticUpdate = useCallback((noteData) => {
     mutate(current => {
@@ -53,12 +61,13 @@ export function NotesProvider({ children }) {
   const value = useMemo(() => ({
     notes: data?.notes || [],
     stats: data?.stats || null,
+    searchIndex,
     isLoading,
     error,
     refreshNotes,
     optimisticUpdate,
     optimisticDelete,
-  }), [data, isLoading, error, refreshNotes, optimisticUpdate, optimisticDelete])
+  }), [data, searchIndex, isLoading, error, refreshNotes, optimisticUpdate, optimisticDelete])
 
   return (
     <NotesContext.Provider value={value}>

@@ -1,19 +1,13 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search, X } from 'lucide-react'
-import { createSearchIndex, searchNotes } from '../lib/search.js'
+import { searchNotes } from '../lib/search.js'
 import { useNotes } from '../contexts/NotesContext.jsx'
 
 export function SearchBar({ onResults, onClear }) {
-  const { notes, isLoading } = useNotes()
+  const { notes, isLoading, searchIndex } = useNotes()
   const [query, setQuery] = useState('')
   const inputRef = useRef(null)
   const debounceRef = useRef(null)
-
-  // Build search index when notes change
-  const searchIndex = useMemo(() => {
-    if (!notes.length) return null
-    return createSearchIndex(notes)
-  }, [notes])
 
   // Debounced search
   const handleSearch = useCallback((q) => {
