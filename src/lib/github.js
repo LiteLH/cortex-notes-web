@@ -60,8 +60,17 @@ export class GitHubService {
       });
 
       if (Array.isArray(data)) throw new Error("Path is a directory");
-      
-      const content = fromBase64(data.content);
+
+      // For large files, GitHub API may not include content (only download_url)
+      let content;
+      if (data.content) {
+        content = fromBase64(data.content);
+      } else if (data.download_url) {
+        const resp = await fetch(data.download_url);
+        content = await resp.text();
+      } else {
+        throw new Error(`No content available for ${path}`);
+      }
       return { content, sha: data.sha };
     } catch (e) {
       console.error(`Error fetching ${path}:`, e);
