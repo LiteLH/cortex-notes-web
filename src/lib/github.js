@@ -70,13 +70,8 @@ export class GitHubService {
   }
 
   async getNotesIndex() {
-    try {
-        const file = await this.getFileContent(INDEX_PATH);
-        return JSON.parse(file.content);
-    } catch (e) {
-        console.error("Error fetching index", e);
-        return [];
-    }
+    const file = await this.getFileContent(INDEX_PATH);
+    return JSON.parse(file.content);
   }
 
   async getNote(path, format) {

@@ -36,7 +36,7 @@ const RENDERERS = {
 export function Home() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const { notes, stats, isLoading } = useNotes()
+  const { notes, stats, isLoading, error } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
   const { config, setMode } = useDisplayConfig()
 
@@ -171,7 +171,14 @@ export function Home() {
         </div>
       )}
 
-      {!isLoading && safeNotes.length === 0 && (
+      {error && (
+        <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg mx-2">
+          <p className="font-bold mb-2">載入筆記失敗</p>
+          <p className="text-sm text-red-400 break-all px-4">{error.message || String(error)}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && safeNotes.length === 0 && (
         <div className="text-center py-20 text-gray-400">
           <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <Book size={32} className="opacity-20" />
