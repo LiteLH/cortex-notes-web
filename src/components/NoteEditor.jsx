@@ -8,11 +8,12 @@ export function NoteEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { service } = useAuth()
-  const { optimisticUpdate } = useNotes()
+  const { notes, optimisticUpdate } = useNotes()
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [originalCreatedAt, setOriginalCreatedAt] = useState(null)
   const [originalPath, setOriginalPath] = useState(null)
 
@@ -36,23 +37,25 @@ export function NoteEditor() {
   }, [isDirty, navigate])
 
   useEffect(() => {
-    if (id) {
-      service.getNotesIndex().then(raw => {
-        const index = Array.isArray(raw) ? raw : (raw?.notes || [])
-        const entry = index.find(n => n.id === id)
-        if (entry) {
-          setOriginalCreatedAt(entry.created_at)
-          setOriginalPath(entry.path)
-          service.getNote(entry.path).then(n => {
-            setTitle(n.title)
-            setContent(n.content)
-            setTags(Array.isArray(n.tags) ? n.tags.join(', ') : '')
-            if (n.created_at) setOriginalCreatedAt(n.created_at)
-          })
-        }
-      })
+    if (!id || !service) return
+    const safeNotes = Array.isArray(notes) ? notes : []
+    const entry = safeNotes.find(n => n.id === id)
+    if (!entry) {
+      setLoadError(`找不到筆記 ${id}`)
+      return
     }
-  }, [id, service])
+    setOriginalCreatedAt(entry.created_at)
+    setOriginalPath(entry.path)
+    service.getNote(entry.path).then(n => {
+      setTitle(n.title)
+      setContent(n.content)
+      setTags(Array.isArray(n.tags) ? n.tags.join(', ') : '')
+      if (n.created_at) setOriginalCreatedAt(n.created_at)
+    }).catch(e => {
+      console.error('Failed to load note:', e)
+      setLoadError(`載入筆記失敗：${e.message}`)
+    })
+  }, [id, service, notes])
 
   const handleSave = async () => {
     if (!title.trim()) return alert("請輸入標題")
@@ -95,6 +98,9 @@ export function NoteEditor() {
         </div>
 
         <div className="flex-1 overflow-auto p-6 md:p-10 w-full bg-white flex flex-col">
+          {loadError && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{loadError}</div>
+          )}
           <label className="sr-only" htmlFor="note-title">標題</label>
           <input
             id="note-title"

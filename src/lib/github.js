@@ -67,6 +67,7 @@ export class GitHubService {
         content = fromBase64(data.content);
       } else if (data.download_url) {
         const resp = await fetch(data.download_url);
+        if (!resp.ok) throw new Error(`Failed to download ${path}: ${resp.status} ${resp.statusText}`);
         content = await resp.text();
       } else {
         throw new Error(`No content available for ${path}`);

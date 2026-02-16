@@ -22,50 +22,29 @@ export function NoteViewer() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
-    if (!service) return
+    if (!service || !notes.length) return
     setLoading(true)
     setError(null)
 
-    const localNote = notes.find(n => n.id === id)
-    if (localNote && localNote.content) {
-      setNote(localNote)
-      setLoading(false)
+    const entry = notes.find(n => n.id === id)
+    if (!entry) {
+      // Not in index — try blind fetch as fallback
+      const year = new Date().getFullYear()
+      const blindPath = `content/${year}/${id}.md`
+      service.getNote(blindPath)
+        .then(n => { setNote(n); setLoading(false) })
+        .catch(() => { setError("在索引或儲存中找不到筆記"); setLoading(false) })
       return
     }
 
-    service.getNotesIndex().then(raw => {
-      const index = Array.isArray(raw) ? raw : (raw?.notes || [])
-      const entry = index.find(n => n.id === id) || localNote
-
-      if (entry) {
-        const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`
-        service.getNote(path, entry.format)
-          .then(n => {
-            setNote({ ...entry, ...n })
-            setLoading(false)
-          })
-          .catch(err => {
-            console.warn("Standard fetch failed, trying direct content fetch...", err)
-            setError("筆記內容未找到（可能正在索引中）")
-            setLoading(false)
-          })
-      } else {
-        const year = new Date().getFullYear()
-        const blindPath = `content/${year}/${id}.md`
-        service.getNote(blindPath)
-          .then(n => {
-            setNote(n)
-            setLoading(false)
-          })
-          .catch(() => {
-            setError("在索引或儲存中找不到筆記")
-            setLoading(false)
-          })
-      }
-    }).catch(() => {
-      setError("無法載入索引")
-      setLoading(false)
-    })
+    const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`
+    service.getNote(path, entry.format)
+      .then(n => { setNote({ ...entry, ...n }); setLoading(false) })
+      .catch(err => {
+        console.warn("Failed to load note content:", err)
+        setError(`筆記內容載入失敗：${err.message}`)
+        setLoading(false)
+      })
   }, [id, service, notes])
 
   const handleDelete = async () => {

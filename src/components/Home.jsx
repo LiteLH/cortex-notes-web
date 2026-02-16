@@ -36,7 +36,7 @@ const RENDERERS = {
 export function Home() {
   const navigate = useNavigate()
   const { logout } = useAuth()
-  const { notes, stats, isLoading, error } = useNotes()
+  const { notes, stats, isLoading, error, refreshNotes } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
   const { config, setMode } = useDisplayConfig()
 
@@ -174,7 +174,10 @@ export function Home() {
       {error && (
         <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg mx-2">
           <p className="font-bold mb-2">載入筆記失敗</p>
-          <p className="text-sm text-red-400 break-all px-4">{error.message || String(error)}</p>
+          <p className="text-sm text-red-400 break-all px-4 mb-4">{error.message || String(error)}</p>
+          <button onClick={refreshNotes} className="text-sm text-blue-600 bg-white px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">
+            重試
+          </button>
         </div>
       )}
 
