@@ -14,7 +14,7 @@ function getNoteDates(notes) {
     if (note.created_at) {
       const d = new Date(note.created_at)
       if (!isNaN(d.getTime())) {
-        dates.add(d.toISOString().slice(0, 10))
+        dates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)
       }
     }
   }

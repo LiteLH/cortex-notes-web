@@ -2,7 +2,8 @@ import { useMemo } from 'react'
 import { Clock, ArrowRight } from 'lucide-react'
 
 export function getDueForReview(notes) {
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   return notes
     .filter(n => n.next_review && n.next_review <= today)
     .sort((a, b) => a.next_review.localeCompare(b.next_review))

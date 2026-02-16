@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { getDueForReview } from '../components/ReviewSection.jsx'
 
-const today = new Date().toISOString().slice(0, 10)
-const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
-const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+function toLocalDateStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const today = toLocalDateStr(new Date())
+const yesterday = toLocalDateStr(new Date(Date.now() - 86400000))
+const tomorrow = toLocalDateStr(new Date(Date.now() + 86400000))
 
 describe('getDueForReview', () => {
   it('returns notes with next_review <= today', () => {
@@ -24,7 +28,7 @@ describe('getDueForReview', () => {
   })
 
   it('sorts by next_review ascending (most overdue first)', () => {
-    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
+    const twoDaysAgo = toLocalDateStr(new Date(Date.now() - 2 * 86400000))
     const notes = [
       { id: '1', next_review: yesterday },
       { id: '2', next_review: twoDaysAgo },

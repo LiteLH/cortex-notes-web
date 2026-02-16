@@ -1,6 +1,12 @@
 import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
+function toLocalDateStr(dateStr) {
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return null
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function getHeatmapColor(count) {
   if (count === 0) return ''
   if (count === 1) return 'bg-blue-100'
@@ -29,10 +35,8 @@ export function Calendar({ notes, onDateClick }) {
     const dates = new Set()
     for (const note of (notes || [])) {
       if (note.created_at) {
-        const d = new Date(note.created_at)
-        if (!isNaN(d.getTime())) {
-          dates.add(d.toISOString().slice(0, 10))
-        }
+        const key = toLocalDateStr(note.created_at)
+        if (key) dates.add(key)
       }
     }
     return dates
@@ -43,11 +47,8 @@ export function Calendar({ notes, onDateClick }) {
     const counts = {}
     for (const note of (notes || [])) {
       if (note.created_at) {
-        const d = new Date(note.created_at)
-        if (!isNaN(d.getTime())) {
-          const key = d.toISOString().slice(0, 10)
-          counts[key] = (counts[key] || 0) + 1
-        }
+        const key = toLocalDateStr(note.created_at)
+        if (key) counts[key] = (counts[key] || 0) + 1
       }
     }
     return counts
@@ -55,7 +56,7 @@ export function Calendar({ notes, onDateClick }) {
 
   const daysInMonth = getMonthDays(year, month)
   const firstDay = getFirstDayOfWeek(year, month)
-  const todayStr = today.toISOString().slice(0, 10)
+  const todayStr = toLocalDateStr(today.toISOString())
 
   const goPrev = () => {
     if (month === 0) { setYear(y => y - 1); setMonth(11) }

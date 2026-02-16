@@ -52,7 +52,8 @@ export function pickRediscovery(notes, dateStr) {
 }
 
 export function RediscoverySection({ notes, onNoteClick }) {
-  const today = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const picks = useMemo(() => pickRediscovery(notes, today), [notes, today])
 
   if (picks.length === 0) return null
