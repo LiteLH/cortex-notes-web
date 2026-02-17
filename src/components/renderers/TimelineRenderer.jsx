@@ -16,7 +16,9 @@ function TimelineCard({ note, onClick }) {
     ? TYPE_BADGE.report
     : TYPE_BADGE[note.note_type] || null
   const safeDate = note.created_at ? new Date(note.created_at) : new Date()
-  const timeStr = isValid(safeDate) ? format(safeDate, 'HH:mm') : '--:--'
+  // Pure date strings (YYYY-MM-DD, 10 chars) have no real time info — don't show fake "08:00"
+  const hasTime = note.created_at && note.created_at.length > 10
+  const timeStr = hasTime && isValid(safeDate) ? format(safeDate, 'HH:mm') : ''
   const safeTags = [...(note.tags || []), ...(note.ai_tags || [])].slice(0, 3)
 
   return (
