@@ -10,6 +10,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import { Loader2, ArrowRight, FileText } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
 import { isValid } from 'date-fns'
+import { formatDateFull } from '../lib/date.js'
 
 export function NoteViewer() {
   const { id } = useParams()
@@ -113,7 +114,7 @@ export function NoteViewer() {
             <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
           ))}
           <span className="text-xs text-gray-400 py-1 ml-auto">
-            {note.created_at ? new Date(note.created_at).toLocaleString() : ''}
+            {formatDateFull(note.created_at)}
           </span>
         </div>
 

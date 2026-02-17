@@ -1,3 +1,5 @@
+import { formatDateShort } from '../../lib/date.js'
+
 const TYPE_BADGE = {
   decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
   learning: { label: '學習', color: 'text-green-600 bg-green-50' },
@@ -7,16 +9,7 @@ const TYPE_BADGE = {
   report: { label: '報告', color: 'text-purple-600 bg-purple-50' },
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return ''
-    return d.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })
-  } catch {
-    return ''
-  }
-}
+const formatDate = formatDateShort
 
 export function CompactListRenderer({ notes, onNoteClick, emptyMessage }) {
   if (!notes?.length) {

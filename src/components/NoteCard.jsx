@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react'
+import { formatDateShort } from '../lib/date.js'
 
 const MAX_TAGS = 3
 const MAX_EXCERPT = 120
@@ -11,16 +12,7 @@ const TYPE_BADGE = {
   memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return ''
-    return d.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })
-  } catch {
-    return ''
-  }
-}
+const formatDate = formatDateShort
 
 export function NoteCard({ note, onClick }) {
   const manualTags = note.tags || []
