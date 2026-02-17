@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
-import { formatDateShort } from '../../lib/date.js'
+import { formatDateSmart } from '../../lib/date.js'
 
 const TYPE_BADGE = {
   decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
@@ -86,7 +86,7 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage }) {
           const noteType = note.format === 'html' ? 'report' : note.note_type
           const badge = TYPE_BADGE[noteType]
           const tags = [...(note.tags || []), ...(note.ai_tags || [])].slice(0, 3)
-          const dateStr = formatDateShort(note.created_at)
+          const dateStr = formatDateSmart(note.created_at)
 
           return (
             <button

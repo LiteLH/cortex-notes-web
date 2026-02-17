@@ -1,4 +1,4 @@
-import { formatDateShort } from '../../lib/date.js'
+import { formatDateSmart } from '../../lib/date.js'
 
 const TYPE_BADGE = {
   decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
@@ -9,7 +9,7 @@ const TYPE_BADGE = {
   report: { label: '報告', color: 'text-purple-600 bg-purple-50' },
 }
 
-const formatDate = formatDateShort
+const formatDate = formatDateSmart
 
 export function SmallCardRenderer({ notes, onNoteClick, emptyMessage }) {
   if (!notes?.length) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Tag } from 'lucide-react'
-import { formatDateShort } from '../lib/date.js'
+import { formatDateSmart } from '../lib/date.js'
 
 export function TagClusterView({ clusters, notes, onNoteClick }) {
   const [expandedIdx, setExpandedIdx] = useState(null)
@@ -49,7 +49,7 @@ export function TagClusterView({ clusters, notes, onNoteClick }) {
                   >
                     <span className="flex-1 text-gray-700 truncate">{note.title || '無標題'}</span>
                     <span className="text-xs text-gray-400">
-                      {formatDateShort(note.created_at)}
+                      {formatDateSmart(note.created_at)}
                     </span>
                   </button>
                 ))}

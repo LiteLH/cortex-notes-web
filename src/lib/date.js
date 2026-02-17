@@ -21,12 +21,12 @@ function hasTimePart(dateStr) {
  */
 export function formatDateShort(dateStr) {
   if (!dateStr) return ''
+  if (hasTimePart(dateStr)) {
+    throw new Error(
+      `formatDateShort only accepts pure dates (YYYY-MM-DD), got: "${dateStr}". Use formatDateFull() for datetime strings.`
+    )
+  }
   try {
-    if (hasTimePart(dateStr)) {
-      const d = new Date(dateStr)
-      if (isNaN(d.getTime())) return ''
-      return d.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })
-    }
     // Pure date string — parse directly to avoid UTC→local shift
     const [, , mo, da] = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/) || []
     if (!mo) return dateStr
@@ -48,6 +48,21 @@ export function formatDateFull(dateStr) {
     return d.toLocaleString()
   }
   return dateStr
+}
+
+/**
+ * Smart short date formatter for mixed created_at formats.
+ * Accepts both pure dates ("2026-02-16") and ISO datetime ("2026-02-16T08:00:00Z").
+ * Always returns a short date like "2月16日".
+ */
+export function formatDateSmart(dateStr) {
+  if (!dateStr) return ''
+  if (hasTimePart(dateStr)) {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    return `${d.getMonth() + 1}月${d.getDate()}日`
+  }
+  return formatDateShort(dateStr)
 }
 
 /**

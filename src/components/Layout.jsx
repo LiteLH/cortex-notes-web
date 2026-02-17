@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { Command as CommandPrimitive } from 'cmdk'
 import { isValid } from 'date-fns'
-import { formatDateShort } from '../lib/date.js'
+import { formatDateSmart } from '../lib/date.js'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -208,7 +208,7 @@ function CommandPalette({ open, onOpenChange }) {
                 <FileText className="mr-2 h-4 w-4" />
                 <span className="flex-1 truncate">{note.title || "無標題"}</span>
                 <span className="text-xs text-gray-400 ml-2">
-                  {formatDateShort(note.created_at)}
+                  {formatDateSmart(note.created_at)}
                 </span>
               </CommandPrimitive.Item>
             ))}

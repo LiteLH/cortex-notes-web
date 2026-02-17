@@ -1,5 +1,5 @@
 import { Globe } from 'lucide-react'
-import { formatDateShort } from '../lib/date.js'
+import { formatDateSmart } from '../lib/date.js'
 
 const MAX_TAGS = 3
 const MAX_EXCERPT = 120
@@ -12,7 +12,7 @@ const TYPE_BADGE = {
   memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
 }
 
-const formatDate = formatDateShort
+const formatDate = formatDateSmart
 
 export function NoteCard({ note, onClick }) {
   const manualTags = note.tags || []
