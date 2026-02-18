@@ -23,6 +23,7 @@ export function TagClusterView({ clusters, notes, onNoteClick }) {
           <div key={idx} className="border border-gray-200 rounded-lg overflow-hidden">
             <button
               onClick={() => toggle(idx)}
+              aria-expanded={isExpanded}
               className="w-full flex items-center gap-2 p-3 text-left hover:bg-gray-50 transition-colors"
             >
               {isExpanded ? <ChevronDown size={14} className="text-gray-400" /> : <ChevronRight size={14} className="text-gray-400" />}
@@ -58,6 +59,11 @@ export function TagClusterView({ clusters, notes, onNoteClick }) {
           </div>
         )
       })}
+      {clusters.length < 5 && (
+        <p className="text-xs text-gray-400 mt-4 text-center">
+          標籤分群根據筆記共現關係自動計算，隨筆記增多分群會更豐富
+        </p>
+      )}
     </div>
   )
 }

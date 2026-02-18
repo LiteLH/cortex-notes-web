@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
+import { stripMarkdown } from '../../lib/markdown.js'
 
 const TYPE_BADGE = {
   decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
@@ -36,7 +37,7 @@ function TimelineCard({ note, onClick }) {
         <span className="text-[10px] text-gray-400 font-mono">{timeStr}</span>
       </div>
       <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-3">
-        {note.excerpt || '尚無預覽內容...'}
+        {stripMarkdown(note.excerpt) || '尚無預覽內容...'}
       </p>
       {safeTags.length > 0 && (
         <div className="flex items-center gap-2">

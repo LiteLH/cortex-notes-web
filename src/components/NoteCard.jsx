@@ -1,5 +1,6 @@
 import { Globe } from 'lucide-react'
 import { formatDateSmart } from '../lib/date.js'
+import { stripMarkdown } from '../lib/markdown.js'
 
 const MAX_TAGS = 3
 const MAX_EXCERPT = 120
@@ -23,7 +24,7 @@ export function NoteCard({ note, onClick }) {
   const isHtml = note.format === 'html'
   const manualTagSet = new Set(manualTags)
 
-  const excerpt = (note.excerpt || '').slice(0, MAX_EXCERPT)
+  const excerpt = stripMarkdown(note.excerpt).slice(0, MAX_EXCERPT)
 
   return (
     <button

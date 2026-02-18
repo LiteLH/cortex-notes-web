@@ -97,6 +97,9 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage }) {
             >
               <div className="flex-1 min-w-0 text-sm text-gray-800 truncate">
                 {note.title || '無標題'}
+                {note.format === 'html' && note.path?.match(/(\d{8})/)?.[1] && (
+                  <span className="ml-2 text-[10px] text-gray-400 font-mono">{note.path.match(/(\d{8})/)[1]}</span>
+                )}
               </div>
               <div className="w-16 shrink-0 hidden sm:block">
                 {badge && (

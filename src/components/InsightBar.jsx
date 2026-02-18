@@ -31,15 +31,18 @@ export function InsightBar({ stats }) {
         <span>筆筆記</span>
       </div>
 
-      <span className="text-gray-200">|</span>
-
-      {/* Monthly trend */}
-      <div className="flex items-center gap-1 shrink-0">
-        <span>本月</span>
-        <span className="font-medium text-gray-700">{last_30_days_count}</span>
-        <TrendIcon size={12} className={trendColor} />
-        {trend !== 0 && prev_30_days_count > 0 && <span className={trendColor}>{trend > 0 ? '+' : ''}{trend}</span>}
-      </div>
+      {/* Monthly trend — hide when prev month has no data (new system, numbers are identical) */}
+      {prev_30_days_count > 0 && (
+        <>
+          <span className="text-gray-200">|</span>
+          <div className="flex items-center gap-1 shrink-0">
+            <span>本月</span>
+            <span className="font-medium text-gray-700">{last_30_days_count}</span>
+            <TrendIcon size={12} className={trendColor} />
+            {trend !== 0 && <span className={trendColor}>{trend > 0 ? '+' : ''}{trend}</span>}
+          </div>
+        </>
+      )}
 
       <span className="text-gray-200 hidden sm:inline">|</span>
 

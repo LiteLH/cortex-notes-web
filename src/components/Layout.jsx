@@ -93,14 +93,14 @@ function Sidebar({ onOpenCmd, className = "" }) {
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">近期</div>
           <div className="space-y-0.5">
             {recentNotes.map(note => (
-              <div
+              <button
                 key={note.id}
                 onClick={() => navigate(`/note/${note.id}`)}
-                className="group flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-200/50 hover:text-gray-900 rounded-md cursor-pointer transition-colors"
+                className="group w-full flex items-center gap-2 px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-200/50 hover:text-gray-900 rounded-md cursor-pointer transition-colors text-left"
               >
-                <FileText size={14} className="text-gray-400 group-hover:text-blue-500" />
+                <FileText size={14} className="text-gray-400 group-hover:text-blue-500 shrink-0" />
                 <span className="truncate">{note.title || "無標題"}</span>
-              </div>
+              </button>
             ))}
           </div>
         </div>

@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { Loader2, ArrowRight, FileText } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
+import { stripMarkdown } from '../lib/markdown.js'
 import { isValid } from 'date-fns'
 import { formatDateFull } from '../lib/date.js'
 
@@ -89,7 +90,7 @@ export function NoteViewer() {
       : "max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100"
     }>
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
+        <button onClick={() => navigate(-1)} aria-label="返回" className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
           <ArrowRight className="rotate-180" size={20} />
         </button>
         <div className="flex gap-2">
@@ -145,7 +146,7 @@ export function NoteViewer() {
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-gray-800 truncate">{rn.title || '無標題'}</div>
                     {rn.excerpt && (
-                      <div className="text-xs text-gray-400 truncate">{rn.excerpt}</div>
+                      <div className="text-xs text-gray-400 truncate">{stripMarkdown(rn.excerpt)}</div>
                     )}
                   </div>
                 </button>
