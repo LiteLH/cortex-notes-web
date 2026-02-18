@@ -6,6 +6,7 @@ const NOTE_TYPE_LABELS = {
   thought: '想法',
   meeting: '會議',
   memo: '備忘',
+  'design-doc': '設計',
   report: '報告',
 }
 
