@@ -21,6 +21,10 @@ function hasTimePart(dateStr) {
  */
 export function formatDateShort(dateStr) {
   if (!dateStr) return ''
+  // gray-matter auto-converts YAML dates to Date objects — coerce back to ISO string
+  if (dateStr instanceof Date) {
+    dateStr = isNaN(dateStr.getTime()) ? '' : dateStr.toISOString().slice(0, 10)
+  }
   if (hasTimePart(dateStr)) {
     throw new Error(
       `formatDateShort only accepts pure dates (YYYY-MM-DD), got: "${dateStr}". Use formatDateFull() for datetime strings.`
@@ -42,6 +46,12 @@ export function formatDateShort(dateStr) {
  */
 export function formatDateFull(dateStr) {
   if (!dateStr) return ''
+  // gray-matter auto-converts YAML dates to Date objects — coerce back to string
+  if (dateStr instanceof Date) {
+    if (isNaN(dateStr.getTime())) return ''
+    // gray-matter converts "2026-02-17" → Date(UTC midnight). Show date only.
+    return dateStr.toISOString().slice(0, 10)
+  }
   if (hasTimePart(dateStr)) {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return ''
@@ -57,6 +67,10 @@ export function formatDateFull(dateStr) {
  */
 export function formatDateSmart(dateStr) {
   if (!dateStr) return ''
+  // gray-matter auto-converts YAML dates to Date objects
+  if (dateStr instanceof Date) {
+    return isNaN(dateStr.getTime()) ? '' : `${dateStr.getMonth() + 1}月${dateStr.getDate()}日`
+  }
   if (hasTimePart(dateStr)) {
     const d = new Date(dateStr)
     if (isNaN(d.getTime())) return ''
@@ -69,7 +83,10 @@ export function formatDateSmart(dateStr) {
  * Format time portion only (e.g. "14:30"). Returns '' for pure dates.
  */
 export function formatTimeOnly(dateStr) {
-  if (!dateStr || !hasTimePart(dateStr)) return ''
+  if (!dateStr) return ''
+  // gray-matter auto-converts YAML dates to Date objects (always UTC midnight = no real time)
+  if (dateStr instanceof Date) return ''
+  if (!hasTimePart(dateStr)) return ''
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
   return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
