@@ -6,6 +6,7 @@ const TYPE_LABELS = {
   meeting: '會議',
   thought: '想法',
   memo: '備忘',
+  'design-doc': '設計',
   report: '報告',
 }
 
