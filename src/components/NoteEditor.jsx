@@ -2,7 +2,16 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useNotes } from '../contexts/NotesContext.jsx'
-import { Loader2, Tag } from 'lucide-react'
+import { Loader2, Tag, FileType } from 'lucide-react'
+
+const NOTE_TYPES = [
+  { value: '', label: '自動判斷', path: null },
+  { value: 'memo', label: '備忘', path: 'notes/memos' },
+  { value: 'decision', label: '決策', path: 'notes/decisions' },
+  { value: 'learning', label: '學習', path: 'notes/learnings' },
+  { value: 'meeting', label: '會議', path: 'notes/meetings' },
+  { value: 'thought', label: '想法', path: 'notes/thoughts' },
+]
 
 export function NoteEditor() {
   const { id } = useParams()
@@ -12,6 +21,7 @@ export function NoteEditor() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
+  const [noteType, setNoteType] = useState('')
   const [saving, setSaving] = useState(false)
   const [loadError, setLoadError] = useState(null)
   const [originalCreatedAt, setOriginalCreatedAt] = useState(null)
@@ -64,13 +74,21 @@ export function NoteEditor() {
     setSaving(true)
     try {
       const noteId = id || crypto.randomUUID()
+      // Determine path: use original path if editing, else type-based or default
+      let path = originalPath
+      if (!path) {
+        const typeEntry = NOTE_TYPES.find(t => t.value === noteType)
+        path = typeEntry?.path
+          ? `${typeEntry.path}/${noteId}.md`
+          : `content/${new Date().getFullYear()}/${noteId}.md`
+      }
       const noteData = {
         id: noteId,
         title,
         content,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         created_at: originalCreatedAt || new Date().toISOString(),
-        path: originalPath || `content/${new Date().getFullYear()}/${noteId}.md`
+        path,
       }
 
       await service.saveNote(noteData)
@@ -88,7 +106,7 @@ export function NoteEditor() {
     <div className="flex flex-col h-full bg-white md:bg-gray-50/50">
       <div className="md:max-w-3xl md:mx-auto md:my-8 md:bg-white md:rounded-2xl md:shadow-sm md:border border-gray-100 w-full h-full flex flex-col overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
-          <button onClick={handleCancel} className="text-gray-500 hover:text-gray-900">取消</button>
+          <button onClick={handleCancel} className="text-gray-500 hover:text-gray-900 min-h-[44px] min-w-[44px] flex items-center justify-center">取消</button>
           <button
             disabled={saving}
             onClick={handleSave}
@@ -111,6 +129,24 @@ export function NoteEditor() {
             value={title}
             onChange={e => setTitle(e.target.value)}
           />
+
+          {/* Note type selector — only for new notes (editing preserves original path) */}
+          {!id && (
+            <div className="flex items-center gap-3 text-gray-400 mb-4 border-b border-gray-50 pb-4">
+              <FileType size={18} />
+              <label className="sr-only" htmlFor="note-type">筆記類型</label>
+              <select
+                id="note-type"
+                value={noteType}
+                onChange={e => setNoteType(e.target.value)}
+                className="flex-1 outline-none text-base text-gray-600 bg-transparent"
+              >
+                {NOTE_TYPES.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="flex items-center gap-3 text-gray-400 mb-8 border-b border-gray-50 pb-4">
             <Tag size={18} />

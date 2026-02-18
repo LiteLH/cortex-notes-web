@@ -152,9 +152,10 @@ export function FacetedFilter({ notes, facets, onFacetsChange }) {
         </div>
       )}
 
-      {/* Tag Filter Row */}
+      {/* Tag Filter Row — mobile: collapsed by default, desktop: show top 10 */}
       {extracted.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">
+          {/* Desktop: always show top 10; Mobile: only show when expanded */}
           {extracted.tags.slice(0, expanded ? undefined : 10).map(({ value, count }) => {
             const isSelected = (facets.tags || []).includes(value)
             return (
@@ -166,21 +167,25 @@ export function FacetedFilter({ notes, facets, onFacetsChange }) {
                   isSelected
                     ? 'bg-blue-500 text-white border-blue-500'
                     : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
-                }`}
+                } ${!expanded ? 'hidden md:inline-flex' : ''}`}
               >
                 {value}
                 <span className="ml-1 text-xs opacity-70">{count}</span>
               </button>
             )
           })}
-          {extracted.tags.length > 10 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="px-3 py-1 text-sm rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 transition-colors"
-            >
-              {expanded ? '收起' : `+${extracted.tags.length - 10} 更多`}
-            </button>
-          )}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1 text-sm rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 transition-colors"
+          >
+            {expanded ? '收起' : (
+              <>
+                {/* Mobile: show total count; Desktop: show remaining count */}
+                <span className="md:hidden">標籤篩選 ({extracted.tags.length})</span>
+                <span className="hidden md:inline">+{Math.max(extracted.tags.length - 10, 0)} 更多</span>
+              </>
+            )}
+          </button>
         </div>
       )}
     </div>

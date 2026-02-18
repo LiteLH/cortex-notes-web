@@ -1,6 +1,11 @@
 import { useState, useMemo } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Globe } from 'lucide-react'
 
+const FOLDER_LABELS = {
+  notes: '筆記', reports: '報告', profile: '個人檔案',
+  decisions: '決策', learnings: '學習', memos: '備忘', meetings: '會議', thoughts: '想法',
+}
+
 function buildTree(notes) {
   const root = { name: '', children: {}, notes: [] }
 
@@ -51,7 +56,7 @@ function TreeNode({ node, depth = 0, onNoteClick, expandedPaths, toggleExpand })
             <span className="w-3.5 shrink-0" />
           )}
           {isExpanded ? <FolderOpen size={16} className="text-blue-500 shrink-0" /> : <Folder size={16} className="text-gray-400 shrink-0" />}
-          <span className="flex-1 text-gray-700 truncate">{node.name}</span>
+          <span className="flex-1 text-gray-700 truncate">{FOLDER_LABELS[node.name] || node.name}</span>
           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">{totalCount}</span>
         </button>
       )}
@@ -95,8 +100,6 @@ function TreeNode({ node, depth = 0, onNoteClick, expandedPaths, toggleExpand })
 }
 
 export function TreeView({ notes, onNoteClick }) {
-  const [expandedPaths, setExpandedPaths] = useState(new Set())
-
   const tree = useMemo(() => {
     const t = buildTree(notes || [])
     // Assign _path to each node for expand tracking
@@ -109,6 +112,18 @@ export function TreeView({ notes, onNoteClick }) {
     assignPaths(t)
     return t
   }, [notes])
+
+  // Default: expand first-level folders
+  const [expandedPaths, setExpandedPaths] = useState(() => {
+    const initial = new Set()
+    if (notes?.length) {
+      const t = buildTree(notes)
+      for (const name of Object.keys(t.children)) {
+        initial.add(name)
+      }
+    }
+    return initial
+  })
 
   const toggleExpand = (path) => {
     setExpandedPaths(prev => {
