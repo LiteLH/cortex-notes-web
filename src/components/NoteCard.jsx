@@ -11,7 +11,7 @@ const TYPE_BADGE = {
   meeting: { label: '會議', color: 'text-blue-600 bg-blue-50' },
   thought: { label: '想法', color: 'text-gray-600 bg-gray-100' },
   memo: { label: '備忘', color: 'text-teal-600 bg-teal-50' },
-  'design-doc': { label: '設計', color: 'text-violet-600 bg-violet-50' },
+  'design-doc': { label: '設計', color: 'text-indigo-600 bg-indigo-50' },
 }
 
 const formatDate = formatDateSmart
