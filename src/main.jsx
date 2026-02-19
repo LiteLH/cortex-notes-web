@@ -11,13 +11,16 @@ import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { NotesProvider } from './contexts/NotesContext.jsx'
+import { UserStateProvider } from './contexts/UserStateContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
       <AuthProvider>
         <NotesProvider>
-          <App />
+          <UserStateProvider>
+            <App />
+          </UserStateProvider>
         </NotesProvider>
       </AuthProvider>
     </ErrorBoundary>
