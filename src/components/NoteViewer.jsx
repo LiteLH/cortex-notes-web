@@ -7,6 +7,7 @@ import { findRelatedNotes } from '../lib/related.js'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
+import rehypeHighlight from 'rehype-highlight'
 import { Loader2, ArrowRight, FileText } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
 import { stripMarkdown } from '../lib/markdown.js'
@@ -125,7 +126,7 @@ export function NoteViewer() {
           <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
         ) : (
           <article className="prose prose-slate prose-lg max-w-none">
-            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
               {note.content || ''}
             </Markdown>
           </article>

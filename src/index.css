@@ -1,1 +1,137 @@
 @import "tailwindcss";
+@import "highlight.js/styles/github-dark.css";
+@plugin "@tailwindcss/typography";
+
+/* ============================================================
+   Prose 自訂排版（Cortex Notes Markdown 閱讀體驗）
+   設計決策來自專家審查，針對 95% 中文 + 英文技術術語場景
+   ============================================================ */
+
+/* --- 基礎排版 --- */
+.prose {
+  line-height: 1.85;              /* 中文字密度高，需要比英文預設 1.75 更寬鬆 */
+  color: #1e293b;                 /* slate-800，比預設更深一點增加可讀性 */
+}
+
+/* --- 標題層次 --- */
+.prose h1 {
+  font-weight: 800;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+}
+
+.prose h2 {
+  font-weight: 700;
+  margin-top: 1.75em;
+  margin-bottom: 0.6em;
+}
+
+.prose h3 {
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+/* --- 行內 code（灰色系 pill，不打斷中文閱讀流）--- */
+.prose :where(code):not(:where(pre *)) {
+  background-color: #f1f5f9;      /* slate-100 */
+  color: #334155;                 /* slate-700 */
+  border: 1px solid #e2e8f0;     /* slate-200 極細邊框 */
+  border-radius: 4px;
+  padding: 0.15em 0.35em;
+  font-size: 0.875em;
+  font-weight: 500;
+  font-feature-settings: 'liga' 0; /* 等寬字體避免連字混淆 */
+}
+
+/* 移除 prose 預設的反引號裝飾 */
+.prose :where(code):not(:where(pre *))::before,
+.prose :where(code):not(:where(pre *))::after {
+  content: none;
+}
+
+/* --- 程式碼區塊（深色風格，折衷對比度）--- */
+.prose pre {
+  background-color: #1e293b;      /* slate-800，比 github-dark 預設 #0d1117 柔和 */
+  border: 1px solid #334155;      /* slate-700 邊框 */
+  border-radius: 8px;
+  padding: 1em 1.25em;
+  overflow-x: auto;               /* 長行水平滾動，不換行 */
+}
+
+.prose pre code {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.875em;
+  color: #e2e8f0;                 /* slate-200 */
+}
+
+/* --- 表格（交替行 + 水平滾動）--- */
+.prose table {
+  display: block;
+  overflow-x: auto;               /* 手機端大表格水平滾動 */
+  -webkit-overflow-scrolling: touch;
+}
+
+.prose thead th {
+  font-weight: 600;
+  border-bottom: 2px solid #cbd5e1; /* slate-300 粗底線 */
+  padding: 0.6em 1em;
+  white-space: nowrap;
+}
+
+.prose tbody td {
+  padding: 0.5em 1em;
+  border-bottom: 1px solid #f1f5f9; /* slate-100 */
+}
+
+.prose tbody tr:nth-child(even) {
+  background-color: #f8fafc;      /* slate-50 交替行 */
+}
+
+/* --- Blockquote（灰色系，普通引用而非 alert）--- */
+.prose blockquote {
+  border-left: 4px solid #cbd5e1; /* slate-300 */
+  background-color: #f8fafc;      /* slate-50 */
+  padding: 0.75em 1em;
+  font-style: normal;             /* 不斜體 — 中文斜體可讀性差 */
+  color: #475569;                 /* slate-600 */
+}
+
+.prose blockquote p {
+  margin: 0.25em 0;
+}
+
+/* --- 連結 --- */
+.prose a {
+  color: #2563eb;                 /* blue-600 */
+  text-decoration: underline;
+  text-decoration-color: #93c5fd; /* blue-300 淡底線 */
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: #1d4ed8;                 /* blue-700 */
+  text-decoration-color: #2563eb; /* hover 加深底線 */
+}
+
+/* --- 列表 --- */
+.prose li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;          /* 收緊 item 間距 */
+}
+
+/* --- 水平線 --- */
+.prose hr {
+  border-color: #e2e8f0;          /* slate-200 */
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+/* --- 圖片 --- */
+.prose img {
+  border-radius: 8px;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}

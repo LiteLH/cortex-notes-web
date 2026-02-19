@@ -16,4 +16,9 @@ describe('markdown rendering strategy', () => {
     const mod = await import('rehype-sanitize')
     expect(mod.default).toBeDefined()
   })
+
+  it('rehype-highlight is importable', async () => {
+    const mod = await import('rehype-highlight')
+    expect(mod.default).toBeDefined()
+  })
 })
