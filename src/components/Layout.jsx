@@ -7,6 +7,7 @@ import {
   Book, Plus, Search, LogOut, FileText,
   Home as HomeIcon, Folder, FolderOpen
 } from 'lucide-react'
+import { PinnedSection } from './PinnedSection.jsx'
 import { Command as CommandPrimitive } from 'cmdk'
 import { isValid } from 'date-fns'
 import { formatDateSmart } from '../lib/date.js'
@@ -80,6 +81,8 @@ function Sidebar({ onOpenCmd, className = "" }) {
             <SidebarItem icon={Plus} label="新增筆記" onClick={() => navigate('/new')} />
           </div>
         </div>
+
+        <PinnedSection variant="sidebar" />
 
         <nav aria-label="分類導航">
           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">分類瀏覽</div>
