@@ -8,11 +8,38 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import rehypeHighlight from 'rehype-highlight'
-import { Loader2, ArrowRight, FileText } from 'lucide-react'
+import { Loader2, ArrowRight, FileText, Copy, Check } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
 import { stripMarkdown } from '../lib/markdown.js'
 import { isValid } from 'date-fns'
 import { formatDateFull } from '../lib/date.js'
+
+function CodeBlock({ children, ...props }) {
+  const [copied, setCopied] = useState(false)
+  const text = String(children).replace(/\n$/, '')
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="relative group">
+      <pre {...props}>{children}</pre>
+      <button
+        onClick={handleCopy}
+        aria-label="複製程式碼"
+        className="absolute top-2 right-2 p-1.5 rounded-md bg-white/10 hover:bg-white/20 text-gray-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} />}
+      </button>
+    </div>
+  )
+}
+
+const markdownComponents = { pre: CodeBlock }
 
 export function NoteViewer() {
   const { id } = useParams()
@@ -126,7 +153,7 @@ export function NoteViewer() {
           <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
         ) : (
           <article className="prose prose-slate prose-lg max-w-none">
-            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize, rehypeHighlight]}>
+            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize, rehypeHighlight]} components={markdownComponents}>
               {note.content || ''}
             </Markdown>
           </article>

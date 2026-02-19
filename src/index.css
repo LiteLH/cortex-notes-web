@@ -7,6 +7,11 @@
    設計決策來自專家審查，針對 95% 中文 + 英文技術術語場景
    ============================================================ */
 
+/* 強制亮色模式，防止瀏覽器深色模式破壞自訂配色 */
+:root {
+  color-scheme: light;
+}
+
 /* --- 基礎排版 --- */
 .prose {
   line-height: 1.85;              /* 中文字密度高，需要比英文預設 1.75 更寬鬆 */
@@ -57,6 +62,7 @@
   border-radius: 8px;
   padding: 1em 1.25em;
   overflow-x: auto;               /* 長行水平滾動，不換行 */
+  margin: 0;                      /* 外層 .relative div 已處理間距 */
 }
 
 .prose pre code {
@@ -78,7 +84,7 @@
   font-weight: 600;
   border-bottom: 2px solid #cbd5e1; /* slate-300 粗底線 */
   padding: 0.6em 1em;
-  white-space: nowrap;
+  /* 不用 nowrap — 中文表頭在手機上需要能換行，否則寬度撐太大 */
 }
 
 .prose tbody td {
