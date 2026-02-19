@@ -5,9 +5,8 @@ import { useNotes } from '../contexts/NotesContext.jsx'
 import { SearchBar } from './SearchBar.jsx'
 import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
 import { Calendar } from './Calendar.jsx'
-import { ReviewSection } from './ReviewSection.jsx'
-import { RediscoverySection } from './RediscoverySection.jsx'
 import { PinnedSection } from './PinnedSection.jsx'
+import { TodayFocusSection } from './TodayFocusSection.jsx'
 import { ViewModeSelector } from './ViewModeSelector.jsx'
 import { InsightBar } from './InsightBar.jsx'
 import { useDisplayConfig } from '../hooks/useDisplayConfig.js'
@@ -113,11 +112,8 @@ export function Home() {
         </div>
       )}
 
-      {/* Today's Review */}
-      {!isSearching && <ReviewSection notes={safeNotes} onNoteClick={handleNoteClick} />}
-
-      {/* Rediscovery */}
-      {!isSearching && <RediscoverySection notes={safeNotes} onNoteClick={handleNoteClick} />}
+      {/* Today's Focus (merged review + rediscovery) */}
+      {!isSearching && <TodayFocusSection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
       {/* Calendar (collapsible, desktop) */}
       <div className="mb-6 hidden md:block">
