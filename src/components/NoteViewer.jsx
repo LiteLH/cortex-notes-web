@@ -10,6 +10,7 @@ import rehypeSanitize from 'rehype-sanitize'
 import rehypeHighlight from 'rehype-highlight'
 import { Loader2, ArrowRight, FileText, Copy, Check } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
+import { PinButton } from './PinButton.jsx'
 import { stripMarkdown } from '../lib/markdown.js'
 import { isValid } from 'date-fns'
 import { formatDateFull } from '../lib/date.js'
@@ -122,6 +123,7 @@ export function NoteViewer() {
           <ArrowRight className="rotate-180" size={20} />
         </button>
         <div className="flex gap-2">
+          <PinButton noteId={id} />
           <button
             onClick={handleDelete}
             disabled={deleting}
