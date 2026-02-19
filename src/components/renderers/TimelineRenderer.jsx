@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { parseISO, isValid, isToday, isYesterday, isThisWeek, format } from 'date-fns'
+import { Star } from 'lucide-react'
 import { stripMarkdown } from '../../lib/markdown.js'
 
 const TYPE_BADGE = {
@@ -12,7 +13,7 @@ const TYPE_BADGE = {
   report: { label: '報告', color: 'text-purple-600 bg-purple-50' },
 }
 
-function TimelineCard({ note, onClick }) {
+function TimelineCard({ note, onClick, isPinned }) {
   const isHtml = note.format === 'html'
   const badge = isHtml
     ? TYPE_BADGE.report
@@ -30,6 +31,7 @@ function TimelineCard({ note, onClick }) {
     >
       <div className="flex justify-between items-start mb-2">
         <div className="flex gap-2 items-center">
+          {isPinned && <Star size={12} className="text-amber-500" fill="currentColor" />}
           {badge && <span className={`${badge.color} p-1 rounded text-xs font-bold`}>{badge.label}</span>}
           <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
             {note.title || '無標題'}
@@ -51,7 +53,7 @@ function TimelineCard({ note, onClick }) {
   )
 }
 
-export function TimelineRenderer({ notes, onNoteClick, emptyMessage }) {
+export function TimelineRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }) {
   const timeline = useMemo(() => {
     if (!notes?.length) return {}
     const groups = { '今天': [], '昨天': [], '本週': [], '更早': [] }
@@ -82,7 +84,7 @@ export function TimelineRenderer({ notes, onNoteClick, emptyMessage }) {
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">{label}</h2>
             <div className="space-y-3">
               {group.map(note => (
-                <TimelineCard key={note.id} note={note} onClick={() => onNoteClick?.(note)} />
+                <TimelineCard key={note.id} note={note} onClick={() => onNoteClick?.(note)} isPinned={pinnedIds?.has(note.id)} />
               ))}
             </div>
           </div>

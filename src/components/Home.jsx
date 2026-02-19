@@ -7,6 +7,7 @@ import { FacetedFilter, applyFacets } from './FacetedFilter.jsx'
 import { Calendar } from './Calendar.jsx'
 import { ReviewSection } from './ReviewSection.jsx'
 import { RediscoverySection } from './RediscoverySection.jsx'
+import { PinnedSection } from './PinnedSection.jsx'
 import { ViewModeSelector } from './ViewModeSelector.jsx'
 import { InsightBar } from './InsightBar.jsx'
 import { useDisplayConfig } from '../hooks/useDisplayConfig.js'
@@ -15,6 +16,7 @@ import { SmallCardRenderer } from './renderers/SmallCardRenderer.jsx'
 import { SortableListRenderer } from './renderers/SortableListRenderer.jsx'
 import { TimelineRenderer } from './renderers/TimelineRenderer.jsx'
 import { Book, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { useUserState } from '../contexts/UserStateContext.jsx'
 
 function SkeletonCard() {
   return (
@@ -39,6 +41,8 @@ export function Home() {
   const { notes, stats, isLoading, error, refreshNotes } = useNotes()
   const safeNotes = Array.isArray(notes) ? notes : []
   const { config, setMode } = useDisplayConfig()
+  const { pins } = useUserState()
+  const pinnedIds = useMemo(() => new Set(pins.map(p => p.noteId)), [pins])
 
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -102,6 +106,13 @@ export function Home() {
         <InsightBar stats={stats} />
       </div>
 
+      {/* Pinned Notes (mobile — sidebar handles desktop) */}
+      {!isSearching && (
+        <div className="md:hidden">
+          <PinnedSection variant="home" />
+        </div>
+      )}
+
       {/* Today's Review */}
       {!isSearching && <ReviewSection notes={safeNotes} onNoteClick={handleNoteClick} />}
 
@@ -161,7 +172,7 @@ export function Home() {
         </h2>
       )}
 
-      <Renderer notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" />
+      <Renderer notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" pinnedIds={pinnedIds} />
 
       {isLoading && safeNotes.length === 0 && (
         <div className="space-y-3">

@@ -1,4 +1,5 @@
 import { formatDateSmart } from '../../lib/date.js'
+import { Star } from 'lucide-react'
 
 const TYPE_BADGE = {
   decision: { label: '決策', color: 'text-orange-600 bg-orange-50' },
@@ -12,7 +13,7 @@ const TYPE_BADGE = {
 
 const formatDate = formatDateSmart
 
-export function CompactListRenderer({ notes, onNoteClick, emptyMessage }) {
+export function CompactListRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }) {
   if (!notes?.length) {
     return <div className="text-center py-12 text-gray-400">{emptyMessage || '沒有筆記'}</div>
   }
@@ -31,6 +32,9 @@ export function CompactListRenderer({ notes, onNoteClick, emptyMessage }) {
             onClick={() => onNoteClick?.(note)}
             className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-lg transition-colors group"
           >
+            {pinnedIds?.has(note.id) && (
+              <Star size={12} className="shrink-0 text-amber-500" fill="currentColor" />
+            )}
             {badge && (
               <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded ${badge.color}`}>
                 {badge.label}

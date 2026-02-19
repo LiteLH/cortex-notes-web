@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronUp, ChevronDown, Star } from 'lucide-react'
 import { formatDateSmart } from '../../lib/date.js'
 
 const TYPE_BADGE = {
@@ -51,7 +51,7 @@ function compareFn(a, b, key, dir) {
   }
 }
 
-export function SortableListRenderer({ notes, onNoteClick, emptyMessage }) {
+export function SortableListRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }) {
   const [sortKey, setSortKey] = useState('created_at')
   const [sortDir, setSortDir] = useState('desc')
 
@@ -96,6 +96,9 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage }) {
               onClick={() => onNoteClick?.(note)}
               className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 rounded-lg transition-colors"
             >
+              {pinnedIds?.has(note.id) && (
+                <Star size={12} className="shrink-0 text-amber-500" fill="currentColor" />
+              )}
               <div className="flex-1 min-w-0 text-sm text-gray-800 truncate">
                 {note.title || '無標題'}
                 {note.format === 'html' && note.path?.match(/(\d{8})/)?.[1] && (
