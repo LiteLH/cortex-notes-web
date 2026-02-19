@@ -141,6 +141,44 @@ export class GitHubService {
 
   // updateIndex removed - moved to backend action
 
+  // Default empty user state
+  static DEFAULT_USER_STATE = { version: 1, pins: [] }
+  static USER_STATE_PATH = 'user-state.json'
+
+  async getUserState() {
+    try {
+      const file = await this.getFileContent(GitHubService.USER_STATE_PATH)
+      return { data: JSON.parse(file.content), sha: file.sha }
+    } catch (e) {
+      if (e.status === 404) {
+        return { data: { ...GitHubService.DEFAULT_USER_STATE }, sha: null }
+      }
+      throw e
+    }
+  }
+
+  async saveUserState(state, sha, retries = 3) {
+    const content = JSON.stringify(state, null, 2)
+    try {
+      const result = await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner: DB_REPO_OWNER,
+        repo: DB_REPO_NAME,
+        path: GitHubService.USER_STATE_PATH,
+        message: 'chore: update user state',
+        content: toBase64(content),
+        ...(sha ? { sha } : {}),
+      })
+      return { sha: result.data.content.sha }
+    } catch (e) {
+      if (e.status === 409 && retries > 0) {
+        // SHA conflict — re-read and retry
+        const fresh = await this.getUserState()
+        return this.saveUserState(state, fresh.sha, retries - 1)
+      }
+      throw e
+    }
+  }
+
   async deleteNote(id, path, sha) {
       if (path) assertSafePath(path);
       if (!path) {
