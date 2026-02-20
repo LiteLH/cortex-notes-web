@@ -40,12 +40,12 @@ function compareFn(a, b, key, dir) {
     case 'title':
       return mul * (a.title || '').localeCompare(b.title || '', 'zh-TW')
     case 'note_type': {
-      const ta = a.format === 'html' ? 'report' : (a.note_type || 'zzz')
-      const tb = b.format === 'html' ? 'report' : (b.note_type || 'zzz')
+      const ta = a.format === 'html' ? 'report' : a.note_type || 'zzz'
+      const tb = b.format === 'html' ? 'report' : b.note_type || 'zzz'
       return mul * ta.localeCompare(tb)
     }
     case 'created_at':
-      return mul * ((a.created_at || '').localeCompare(b.created_at || ''))
+      return mul * (a.created_at || '').localeCompare(b.created_at || '')
     default:
       return 0
   }
@@ -62,7 +62,7 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage, pinnedI
 
   const handleSort = (key) => {
     if (key === sortKey) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
       setSortKey(key)
       setSortDir(key === 'title' ? 'asc' : 'desc')
@@ -77,13 +77,19 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage, pinnedI
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-200 mb-1">
-        {COLUMNS.map(col => (
-          <SortHeader key={col.key} column={col} sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+        {COLUMNS.map((col) => (
+          <SortHeader
+            key={col.key}
+            column={col}
+            sortKey={sortKey}
+            sortDir={sortDir}
+            onSort={handleSort}
+          />
         ))}
       </div>
       {/* Rows */}
       <div className="space-y-0.5" role="list">
-        {sorted.map(note => {
+        {sorted.map((note) => {
           const noteType = note.format === 'html' ? 'report' : note.note_type
           const badge = TYPE_BADGE[noteType]
           const tags = [...(note.tags || []), ...(note.ai_tags || [])].slice(0, 3)
@@ -102,7 +108,9 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage, pinnedI
               <div className="flex-1 min-w-0 text-sm text-gray-800 truncate">
                 {note.title || '無標題'}
                 {note.format === 'html' && note.path?.match(/(\d{8})/)?.[1] && (
-                  <span className="ml-2 text-[10px] text-gray-400 font-mono">{note.path.match(/(\d{8})/)[1]}</span>
+                  <span className="ml-2 text-[10px] text-gray-400 font-mono">
+                    {note.path.match(/(\d{8})/)[1]}
+                  </span>
                 )}
               </div>
               <div className="w-16 shrink-0 hidden sm:block">
@@ -113,15 +121,16 @@ export function SortableListRenderer({ notes, onNoteClick, emptyMessage, pinnedI
                 )}
               </div>
               <div className="w-32 shrink-0 hidden md:flex flex-wrap gap-1">
-                {tags.map(tag => (
-                  <span key={tag} className="text-[10px] text-gray-400 bg-gray-100 px-1 py-0.5 rounded">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[10px] text-gray-400 bg-gray-100 px-1 py-0.5 rounded"
+                  >
                     {tag}
                   </span>
                 ))}
               </div>
-              <div className="w-20 shrink-0 text-right text-xs text-gray-400">
-                {dateStr}
-              </div>
+              <div className="w-20 shrink-0 text-right text-xs text-gray-400">{dateStr}</div>
             </button>
           )
         })}

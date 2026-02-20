@@ -10,25 +10,28 @@ export function SearchBar({ onResults, onClear }) {
   const debounceRef = useRef(null)
 
   // Debounced search
-  const handleSearch = useCallback((q) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+  const handleSearch = useCallback(
+    (q) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
 
-    debounceRef.current = setTimeout(() => {
-      if (!q.trim()) {
-        onClear?.()
-        return
-      }
-      if (!searchIndex) return
-      const hits = searchNotes(searchIndex, q)
-      // Map search results back to full note objects
-      const hitIds = new Set(hits.map(h => h.id))
-      const results = notes.filter(n => hitIds.has(n.id))
-      // Sort by search score
-      const scoreMap = Object.fromEntries(hits.map(h => [h.id, h.score]))
-      results.sort((a, b) => (scoreMap[b.id] || 0) - (scoreMap[a.id] || 0))
-      onResults?.(results, q)
-    }, 150)
-  }, [searchIndex, notes, onResults, onClear])
+      debounceRef.current = setTimeout(() => {
+        if (!q.trim()) {
+          onClear?.()
+          return
+        }
+        if (!searchIndex) return
+        const hits = searchNotes(searchIndex, q)
+        // Map search results back to full note objects
+        const hitIds = new Set(hits.map((h) => h.id))
+        const results = notes.filter((n) => hitIds.has(n.id))
+        // Sort by search score
+        const scoreMap = Object.fromEntries(hits.map((h) => [h.id, h.score]))
+        results.sort((a, b) => (scoreMap[b.id] || 0) - (scoreMap[a.id] || 0))
+        onResults?.(results, q)
+      }, 150)
+    },
+    [searchIndex, notes, onResults, onClear],
+  )
 
   useEffect(() => {
     handleSearch(query)
@@ -63,10 +66,7 @@ export function SearchBar({ onResults, onClear }) {
 
   return (
     <div className="relative w-full">
-      <Search
-        size={18}
-        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-      />
+      <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
       <input
         ref={inputRef}
         type="text"
@@ -78,7 +78,10 @@ export function SearchBar({ onResults, onClear }) {
       />
       {query && (
         <button
-          onClick={() => { setQuery(''); onClear?.() }}
+          onClick={() => {
+            setQuery('')
+            onClear?.()
+          }}
           aria-label="清除搜尋"
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
         >

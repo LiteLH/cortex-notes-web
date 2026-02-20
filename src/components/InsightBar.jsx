@@ -13,7 +13,13 @@ const TYPE_LABELS = {
 export function InsightBar({ stats }) {
   if (!stats) return null
 
-  const { type_distribution, last_30_days_count, prev_30_days_count, pending_reviews, total_notes } = stats
+  const {
+    type_distribution,
+    last_30_days_count,
+    prev_30_days_count,
+    pending_reviews,
+    total_notes,
+  } = stats
   const trend = last_30_days_count - prev_30_days_count
   const TrendIcon = trend > 0 ? TrendingUp : trend < 0 ? TrendingDown : Minus
   const trendColor = trend > 0 ? 'text-green-600' : trend < 0 ? 'text-red-500' : 'text-gray-400'
@@ -40,7 +46,12 @@ export function InsightBar({ stats }) {
             <span>本月</span>
             <span className="font-medium text-gray-700">{last_30_days_count}</span>
             <TrendIcon size={12} className={trendColor} />
-            {trend !== 0 && <span className={trendColor}>{trend > 0 ? '+' : ''}{trend}</span>}
+            {trend !== 0 && (
+              <span className={trendColor}>
+                {trend > 0 ? '+' : ''}
+                {trend}
+              </span>
+            )}
           </div>
         </>
       )}

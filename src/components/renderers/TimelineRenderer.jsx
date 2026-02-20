@@ -15,9 +15,7 @@ const TYPE_BADGE = {
 
 function TimelineCard({ note, onClick, isPinned }) {
   const isHtml = note.format === 'html'
-  const badge = isHtml
-    ? TYPE_BADGE.report
-    : TYPE_BADGE[note.note_type] || null
+  const badge = isHtml ? TYPE_BADGE.report : TYPE_BADGE[note.note_type] || null
   const safeDate = note.created_at ? new Date(note.created_at) : new Date()
   // Pure date strings (YYYY-MM-DD, 10 chars) have no real time info — don't show fake "08:00"
   const hasTime = note.created_at && note.created_at.length > 10
@@ -32,7 +30,9 @@ function TimelineCard({ note, onClick, isPinned }) {
       <div className="flex justify-between items-start mb-2">
         <div className="flex gap-2 items-center">
           {isPinned && <Star size={12} className="text-amber-500" fill="currentColor" />}
-          {badge && <span className={`${badge.color} p-1 rounded text-xs font-bold`}>{badge.label}</span>}
+          {badge && (
+            <span className={`${badge.color} p-1 rounded text-xs font-bold`}>{badge.label}</span>
+          )}
           <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-1">
             {note.title || '無標題'}
           </h3>
@@ -44,8 +44,10 @@ function TimelineCard({ note, onClick, isPinned }) {
       </p>
       {safeTags.length > 0 && (
         <div className="flex items-center gap-2">
-          {safeTags.map(tag => (
-            <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">#{tag}</span>
+          {safeTags.map((tag) => (
+            <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">
+              #{tag}
+            </span>
           ))}
         </div>
       )}
@@ -56,11 +58,14 @@ function TimelineCard({ note, onClick, isPinned }) {
 export function TimelineRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }) {
   const timeline = useMemo(() => {
     if (!notes?.length) return {}
-    const groups = { '今天': [], '昨天': [], '本週': [], '更早': [] }
+    const groups = { 今天: [], 昨天: [], 本週: [], 更早: [] }
     for (const note of notes) {
       try {
         const date = parseISO(note.created_at || '')
-        if (!isValid(date)) { groups['更早'].push(note); continue }
+        if (!isValid(date)) {
+          groups['更早'].push(note)
+          continue
+        }
         if (isToday(date)) groups['今天'].push(note)
         else if (isYesterday(date)) groups['昨天'].push(note)
         else if (isThisWeek(date)) groups['本週'].push(note)
@@ -78,17 +83,25 @@ export function TimelineRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }
 
   return (
     <div className="space-y-8">
-      {Object.entries(timeline).map(([label, group]) =>
-        group.length > 0 && (
-          <div key={label}>
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">{label}</h2>
-            <div className="space-y-3">
-              {group.map(note => (
-                <TimelineCard key={note.id} note={note} onClick={() => onNoteClick?.(note)} isPinned={pinnedIds?.has(note.id)} />
-              ))}
+      {Object.entries(timeline).map(
+        ([label, group]) =>
+          group.length > 0 && (
+            <div key={label}>
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
+                {label}
+              </h2>
+              <div className="space-y-3">
+                {group.map((note) => (
+                  <TimelineCard
+                    key={note.id}
+                    note={note}
+                    onClick={() => onNoteClick?.(note)}
+                    isPinned={pinnedIds?.has(note.id)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        )
+          ),
       )}
     </div>
   )

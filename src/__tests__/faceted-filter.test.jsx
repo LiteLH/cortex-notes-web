@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { applyFacets, extractFacets } from '../components/FacetedFilter.jsx'
 
 const mockNotes = [
-  { id: '1', note_type: 'decision', tags: ['arch'], created_at: '2026-02-15T10:00:00Z', decision_status: 'active' },
+  {
+    id: '1',
+    note_type: 'decision',
+    tags: ['arch'],
+    created_at: '2026-02-15T10:00:00Z',
+    decision_status: 'active',
+  },
   { id: '2', note_type: 'learning', tags: ['react'], created_at: '2026-02-10T10:00:00Z' },
   { id: '3', note_type: 'thought', tags: ['arch', 'react'], created_at: '2026-01-01T10:00:00Z' },
   { id: '4', note_type: 'meeting', tags: ['team'], created_at: '2025-06-01T10:00:00Z' },
@@ -19,12 +25,12 @@ describe('extractFacets', () => {
 
   it('extracts tags with counts', () => {
     const facets = extractFacets(mockNotes)
-    expect(facets.tags.find(t => t.value === 'arch').count).toBe(2)
+    expect(facets.tags.find((t) => t.value === 'arch').count).toBe(2)
   })
 
   it('includes report type for html format notes', () => {
     const facets = extractFacets(mockNotes)
-    expect(facets.types.find(t => t.value === 'report')).toBeDefined()
+    expect(facets.types.find((t) => t.value === 'report')).toBeDefined()
   })
 
   it('includes design-doc type', () => {
@@ -35,13 +41,19 @@ describe('extractFacets', () => {
   it('merges ai_tags into tag facets', () => {
     const notesWithAiTags = [
       ...mockNotes,
-      { id: '7', note_type: 'learning', tags: ['react'], ai_tags: ['前端', 'hooks'], created_at: '2026-02-15T10:00:00Z' },
+      {
+        id: '7',
+        note_type: 'learning',
+        tags: ['react'],
+        ai_tags: ['前端', 'hooks'],
+        created_at: '2026-02-15T10:00:00Z',
+      },
     ]
     const facets = extractFacets(notesWithAiTags)
-    expect(facets.tags.find(t => t.value === '前端')).toBeDefined()
-    expect(facets.tags.find(t => t.value === 'hooks')).toBeDefined()
+    expect(facets.tags.find((t) => t.value === '前端')).toBeDefined()
+    expect(facets.tags.find((t) => t.value === 'hooks')).toBeDefined()
     // react appears in notes 2, 3, and 7 (3 notes total)
-    expect(facets.tags.find(t => t.value === 'react').count).toBe(3)
+    expect(facets.tags.find((t) => t.value === 'react').count).toBe(3)
   })
 })
 
@@ -75,7 +87,7 @@ describe('applyFacets', () => {
   it('filters by time range', () => {
     const result = applyFacets(mockNotes, { timeRange: 'month' })
     // 只有 2026-02 的筆記
-    expect(result.every(n => n.created_at.startsWith('2026-02'))).toBe(true)
+    expect(result.every((n) => n.created_at.startsWith('2026-02'))).toBe(true)
   })
 
   it('filters report type by format=html', () => {

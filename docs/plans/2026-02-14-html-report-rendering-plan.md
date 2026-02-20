@@ -9,6 +9,7 @@
 **Tech Stack:** React 19, Python 3.11 stdlib (`html.parser`), GitHub Actions
 
 **Repos:**
+
 - Frontend: `/home/lide/cortex-notes-web/` (GitHub: LiteLH/cortex-notes-web)
 - Database: `/home/lide/cortex-notes-db/` (GitHub: LiteLH/cortex-notes-db)
 
@@ -17,6 +18,7 @@
 ### Task 1: Extend update_index.py to scan HTML files
 
 **Files:**
+
 - Modify: `/home/lide/cortex-notes-db/scripts/update_index.py`
 
 **Step 1: Add HtmlTextExtractor class using stdlib html.parser**
@@ -154,6 +156,7 @@ git commit -m "feat: extend index to scan HTML reports in reports/"
 ### Task 2: Consolidate CI workflows
 
 **Files:**
+
 - Rewrite: `/home/lide/cortex-notes-db/.github/workflows/update-index.yml`
 - Delete: `/home/lide/cortex-notes-db/.github/workflows/rebuild-index.yml`
 
@@ -227,6 +230,7 @@ git commit -m "ci: consolidate into single index workflow, add HTML triggers"
 ### Task 3: Add HtmlRenderer component to frontend
 
 **Files:**
+
 - Create: `/home/lide/cortex-notes-web/src/components/HtmlRenderer.jsx`
 
 **Step 1: Create HtmlRenderer.jsx**
@@ -238,11 +242,12 @@ git commit -m "ci: consolidate into single index workflow, add HTML triggers"
  */
 export function HtmlRenderer({ content, title }) {
   // Security: refuse to render if content is empty
-  if (!content) return null;
+  if (!content) return null
 
   // Inject CSP meta tag to block external resource loading
-  const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:;">';
-  const sandboxedContent = csp + content;
+  const csp =
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; style-src \'unsafe-inline\'; img-src data:;">'
+  const sandboxedContent = csp + content
 
   return (
     <div className="relative rounded-lg overflow-hidden border border-gray-200">
@@ -254,7 +259,7 @@ export function HtmlRenderer({ content, title }) {
         title={title || 'HTML Report'}
       />
     </div>
-  );
+  )
 }
 ```
 
@@ -271,6 +276,7 @@ git commit -m "feat: add HtmlRenderer component with sandboxed iframe"
 ### Task 4: Modify getNote() to handle HTML format
 
 **Files:**
+
 - Modify: `/home/lide/cortex-notes-web/src/lib/github.js:75-80`
 
 **Step 1: Update getNote() to accept format parameter**
@@ -303,6 +309,7 @@ git commit -m "feat: getNote() supports HTML format parameter"
 ### Task 5: Update NoteViewer to render HTML reports
 
 **Files:**
+
 - Modify: `/home/lide/cortex-notes-web/src/App.jsx:566-689`
 
 **Step 1: Add HtmlRenderer import at top of App.jsx**
@@ -310,7 +317,7 @@ git commit -m "feat: getNote() supports HTML format parameter"
 Add after the existing component imports (around line 5):
 
 ```javascript
-import { HtmlRenderer } from './components/HtmlRenderer';
+import { HtmlRenderer } from './components/HtmlRenderer'
 ```
 
 **Step 2: Update NoteViewer useEffect to pass format to getNote()**
@@ -320,103 +327,139 @@ In the `useEffect` (lines 574-622), modify the `service.getNote()` calls to pass
 Replace lines 588-617 with:
 
 ```javascript
-    service.getNotesIndex().then(index => {
-      const entry = index.find(n => n.id === id) || localNote;
+service
+  .getNotesIndex()
+  .then((index) => {
+    const entry = index.find((n) => n.id === id) || localNote
 
-      if (entry) {
-        const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`;
-        service.getNote(path, entry.format)
-            .then(n => {
-                // Merge index metadata with fetched content
-                setNote({ ...entry, ...n });
-                setLoading(false);
-            })
-            .catch(err => {
-                console.warn("Standard fetch failed, trying direct content fetch...", err);
-                setError("Note content not found (yet). It might be indexing.");
-                setLoading(false);
-            });
-      } else {
-        const year = new Date().getFullYear();
-        const blindPath = `content/${year}/${id}.md`;
-        service.getNote(blindPath)
-            .then(n => {
-                setNote(n);
-                setLoading(false);
-            })
-            .catch(() => {
-                setError("Note not found in index or storage.");
-                setLoading(false);
-            });
-      }
-    }).catch(err => {
-        setError("Failed to load index.");
-        setLoading(false);
-    });
+    if (entry) {
+      const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`
+      service
+        .getNote(path, entry.format)
+        .then((n) => {
+          // Merge index metadata with fetched content
+          setNote({ ...entry, ...n })
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.warn('Standard fetch failed, trying direct content fetch...', err)
+          setError('Note content not found (yet). It might be indexing.')
+          setLoading(false)
+        })
+    } else {
+      const year = new Date().getFullYear()
+      const blindPath = `content/${year}/${id}.md`
+      service
+        .getNote(blindPath)
+        .then((n) => {
+          setNote(n)
+          setLoading(false)
+        })
+        .catch(() => {
+          setError('Note not found in index or storage.')
+          setLoading(false)
+        })
+    }
+  })
+  .catch((err) => {
+    setError('Failed to load index.')
+    setLoading(false)
+  })
 ```
 
 **Step 3: Update the NoteViewer render section**
 
 Replace lines 648-688 with:
 
-```jsx
-  const isHtml = note.format === 'html';
-  // Security: only allow HTML rendering for files in reports/ directory
-  const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/');
+````jsx
+const isHtml = note.format === 'html'
+// Security: only allow HTML rendering for files in reports/ directory
+const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/')
 
-  return (
-    <div className={isValidHtmlPath
-      ? "mx-auto bg-white min-h-screen pb-24 md:my-4"
-      : "max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100"
-    }>
-      <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
-            <ArrowRight className="rotate-180" size={20} />
+return (
+  <div
+    className={
+      isValidHtmlPath
+        ? 'mx-auto bg-white min-h-screen pb-24 md:my-4'
+        : 'max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100'
+    }
+  >
+    <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
+      <button
+        onClick={() => navigate(-1)}
+        className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500"
+      >
+        <ArrowRight className="rotate-180" size={20} />
+      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="text-red-500 font-medium text-sm px-3 hover:bg-red-50 rounded disabled:opacity-50"
+        >
+          {deleting ? 'Deleting...' : 'Delete'}
         </button>
-        <div className="flex gap-2">
-            <button
-                onClick={handleDelete}
-                disabled={deleting}
-                className="text-red-500 font-medium text-sm px-3 hover:bg-red-50 rounded disabled:opacity-50"
-            >
-                {deleting ? 'Deleting...' : 'Delete'}
-            </button>
-            {!isHtml && (
-              <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">Edit</button>
-            )}
-        </div>
-      </div>
-
-      <div className="px-6 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
-        <div className="flex flex-wrap gap-2 mb-8">
-            {Array.isArray(note.tags) && note.tags.map(t => (
-                <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
-            ))}
-            <span className="text-xs text-gray-400 py-1 ml-auto">
-                {note.created_at ? new Date(note.created_at).toLocaleString() : ''}
-            </span>
-        </div>
-
-        {isValidHtmlPath ? (
-          <HtmlRenderer content={note.content} title={note.title} />
-        ) : isHtml ? (
-          <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
-        ) : (
-          <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
-              {(note.content || '').split('\n').map((line, i) => {
-                  if (line.startsWith('# ')) return null;
-                  if (line.trim() === '---') return <hr key={i} className="border-gray-100" />;
-                  if (line.startsWith('> ')) return <blockquote key={i} className="border-l-4 border-blue-200 pl-4 italic text-gray-600">{line.replace('> ', '')}</blockquote>;
-                  if (line.startsWith('```')) return null;
-                  return <p key={i} className="mb-4 text-gray-700 leading-7">{line}</p>;
-              })}
-          </article>
+        {!isHtml && (
+          <button
+            onClick={() => navigate(`/edit/${id}`)}
+            className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded"
+          >
+            Edit
+          </button>
         )}
       </div>
     </div>
-  );
-```
+
+    <div className="px-6 py-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
+      <div className="flex flex-wrap gap-2 mb-8">
+        {Array.isArray(note.tags) &&
+          note.tags.map((t) => (
+            <span
+              key={t}
+              className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
+            >
+              #{t}
+            </span>
+          ))}
+        <span className="text-xs text-gray-400 py-1 ml-auto">
+          {note.created_at ? new Date(note.created_at).toLocaleString() : ''}
+        </span>
+      </div>
+
+      {isValidHtmlPath ? (
+        <HtmlRenderer content={note.content} title={note.title} />
+      ) : isHtml ? (
+        <div className="text-red-500">
+          Security error: HTML format not allowed for path: {note.path}
+        </div>
+      ) : (
+        <article className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600">
+          {(note.content || '').split('\n').map((line, i) => {
+            if (line.startsWith('# ')) return null
+            if (line.trim() === '---') return <hr key={i} className="border-gray-100" />
+            if (line.startsWith('> '))
+              return (
+                <blockquote
+                  key={i}
+                  className="border-l-4 border-blue-200 pl-4 italic text-gray-600"
+                >
+                  {line.replace('> ', '')}
+                </blockquote>
+              )
+            if (line.startsWith('```')) return null
+            return (
+              <p key={i} className="mb-4 text-gray-700 leading-7">
+                {line}
+              </p>
+            )
+          })}
+        </article>
+      )}
+    </div>
+  </div>
+)
+````
 
 **Step 4: Verify build passes**
 
@@ -453,6 +496,7 @@ Expected: Build succeeds.
 Run: `cd /home/lide/cortex-notes-web && npm run dev`
 
 Manual test: Open browser, authenticate, navigate to an HTML report from the note list. Verify:
+
 - Report renders with original dark theme / gradients / styling
 - Edit button is hidden
 - Back navigation works
@@ -469,11 +513,11 @@ cd /home/lide/cortex-notes-web && git push origin main
 
 ## Summary
 
-| Task | Repo | What |
-|------|------|------|
-| 1 | cortex-notes-db | Extend update_index.py with HtmlTextExtractor |
-| 2 | cortex-notes-db | Consolidate CI into single workflow |
-| 3 | cortex-notes-web | Add HtmlRenderer component |
-| 4 | cortex-notes-web | Modify getNote() for HTML format |
-| 5 | cortex-notes-web | Update NoteViewer with HTML rendering branch |
-| 6 | Both | End-to-end verification and push |
+| Task | Repo             | What                                          |
+| ---- | ---------------- | --------------------------------------------- |
+| 1    | cortex-notes-db  | Extend update_index.py with HtmlTextExtractor |
+| 2    | cortex-notes-db  | Consolidate CI into single workflow           |
+| 3    | cortex-notes-web | Add HtmlRenderer component                    |
+| 4    | cortex-notes-web | Modify getNote() for HTML format              |
+| 5    | cortex-notes-web | Update NoteViewer with HTML rendering branch  |
+| 6    | Both             | End-to-end verification and push              |

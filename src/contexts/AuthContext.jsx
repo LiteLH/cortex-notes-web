@@ -17,21 +17,25 @@ export function AuthProvider({ children }) {
     }
 
     const svc = new GitHubService(token)
-    svc.verifyToken().then(result => {
-      if (result.valid) {
-        setService(svc)
-        setIsAuthenticated(true)
-        setAuthError(null)
-      } else {
-        setAuthError(result.error)
-        localStorage.removeItem('gh_token')
-        setToken('')
-      }
-    }).catch(err => {
-      setAuthError(err.message)
-    }).finally(() => {
-      setIsLoading(false)
-    })
+    svc
+      .verifyToken()
+      .then((result) => {
+        if (result.valid) {
+          setService(svc)
+          setIsAuthenticated(true)
+          setAuthError(null)
+        } else {
+          setAuthError(result.error)
+          localStorage.removeItem('gh_token')
+          setToken('')
+        }
+      })
+      .catch((err) => {
+        setAuthError(err.message)
+      })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [token])
 
   const login = useCallback((newToken) => {
@@ -52,7 +56,9 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ token, service, isAuthenticated, isLoading, authError, login, logout }}>
+    <AuthContext.Provider
+      value={{ token, service, isAuthenticated, isLoading, authError, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   )

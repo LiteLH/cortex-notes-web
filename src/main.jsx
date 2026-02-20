@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer'
 // Polyfill Buffer for browser environment (essential for gray-matter)
 if (typeof window !== 'undefined') {
-  window.Buffer = Buffer;
+  window.Buffer = Buffer
 }
 
 import { StrictMode } from 'react'

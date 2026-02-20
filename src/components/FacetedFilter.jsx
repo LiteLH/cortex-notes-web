@@ -23,7 +23,7 @@ export function extractFacets(notes) {
 
   for (const note of notes) {
     // Type facet
-    const type = note.format === 'html' ? 'report' : (note.note_type || null)
+    const type = note.format === 'html' ? 'report' : note.note_type || null
     if (type) {
       typeCounts[type] = (typeCounts[type] || 0) + 1
     }
@@ -51,27 +51,31 @@ function isInTimeRange(dateStr, range) {
   const diffDays = (now - date) / 86400000
 
   switch (range) {
-    case 'week': return diffDays <= 7
-    case 'month': return diffDays <= 30
-    case 'quarter': return diffDays <= 90
-    default: return true
+    case 'week':
+      return diffDays <= 7
+    case 'month':
+      return diffDays <= 30
+    case 'quarter':
+      return diffDays <= 90
+    default:
+      return true
   }
 }
 
 export function applyFacets(notes, facets) {
   if (!facets || Object.keys(facets).length === 0) return notes
 
-  return notes.filter(note => {
+  return notes.filter((note) => {
     // Type filter (OR within dimension)
     if (facets.types?.length) {
-      const noteType = note.format === 'html' ? 'report' : (note.note_type || null)
+      const noteType = note.format === 'html' ? 'report' : note.note_type || null
       if (!facets.types.includes(noteType)) return false
     }
 
     // Tag filter (OR within dimension, matches both manual and AI tags)
     if (facets.tags?.length) {
       const noteTags = [...(note.tags || []), ...(note.ai_tags || [])]
-      if (!facets.tags.some(t => noteTags.includes(t))) return false
+      if (!facets.tags.some((t) => noteTags.includes(t))) return false
     }
 
     // Time range filter
@@ -89,17 +93,13 @@ export function FacetedFilter({ notes, facets, onFacetsChange }) {
 
   const toggleType = (type) => {
     const current = facets.types || []
-    const next = current.includes(type)
-      ? current.filter(t => t !== type)
-      : [...current, type]
+    const next = current.includes(type) ? current.filter((t) => t !== type) : [...current, type]
     onFacetsChange({ ...facets, types: next })
   }
 
   const toggleTag = (tag) => {
     const current = facets.tags || []
-    const next = current.includes(tag)
-      ? current.filter(t => t !== tag)
-      : [...current, tag]
+    const next = current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]
     onFacetsChange({ ...facets, tags: next })
   }
 
@@ -179,11 +179,15 @@ export function FacetedFilter({ notes, facets, onFacetsChange }) {
             onClick={() => setExpanded(!expanded)}
             className="px-3 py-1 text-sm rounded-full border border-dashed border-gray-300 text-gray-400 hover:text-blue-500 transition-colors"
           >
-            {expanded ? '收起' : (
+            {expanded ? (
+              '收起'
+            ) : (
               <>
                 {/* Mobile: show total count; Desktop: show remaining count */}
                 <span className="md:hidden">標籤篩選 ({extracted.tags.length})</span>
-                <span className="hidden md:inline">+{Math.max(extracted.tags.length - 10, 0)} 更多</span>
+                <span className="hidden md:inline">
+                  +{Math.max(extracted.tags.length - 10, 0)} 更多
+                </span>
               </>
             )}
           </button>

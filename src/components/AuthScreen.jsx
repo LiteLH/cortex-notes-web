@@ -18,7 +18,10 @@ export function AuthScreen() {
         <div className="p-8">
           <div className="mb-6 text-sm text-gray-600 bg-blue-50 p-4 rounded-lg border border-blue-100">
             <p className="font-semibold mb-1">為什麼需要這個？</p>
-            <p>你的筆記儲存在<strong>私人 GitHub 儲存庫</strong>中。需要提供 Personal Access Token (PAT) 才能存取。</p>
+            <p>
+              你的筆記儲存在<strong>私人 GitHub 儲存庫</strong>中。需要提供 Personal Access Token
+              (PAT) 才能存取。
+            </p>
           </div>
 
           {authError && (
@@ -33,7 +36,7 @@ export function AuthScreen() {
             className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none transition"
             placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
           />
 
           <button
@@ -45,7 +48,12 @@ export function AuthScreen() {
 
           <div className="mt-6 text-center text-xs text-gray-400">
             <p>Token 儲存在瀏覽器本機。</p>
-            <a href="https://github.com/settings/tokens/new?scopes=repo" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline mt-1 inline-block">
+            <a
+              href="https://github.com/settings/tokens/new?scopes=repo"
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-500 hover:underline mt-1 inline-block"
+            >
               產生新的 Token (Classic) &rarr;
             </a>
           </div>

@@ -20,7 +20,7 @@ export function SmallCardRenderer({ notes, onNoteClick, emptyMessage, pinnedIds 
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-      {notes.map(note => {
+      {notes.map((note) => {
         const noteType = note.format === 'html' ? 'report' : note.note_type
         const badge = TYPE_BADGE[noteType]
         const tags = [...(note.tags || []), ...(note.ai_tags || [])].slice(0, 2)
@@ -36,7 +36,9 @@ export function SmallCardRenderer({ notes, onNoteClick, emptyMessage, pinnedIds 
                 <Star size={10} className="text-amber-500" fill="currentColor" />
               )}
               {badge && (
-                <span className={`shrink-0 px-1 py-0.5 text-[10px] font-medium rounded ${badge.color}`}>
+                <span
+                  className={`shrink-0 px-1 py-0.5 text-[10px] font-medium rounded ${badge.color}`}
+                >
                   {badge.label}
                 </span>
               )}
@@ -47,8 +49,11 @@ export function SmallCardRenderer({ notes, onNoteClick, emptyMessage, pinnedIds 
             </h3>
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-auto">
-                {tags.map(tag => (
-                  <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[10px] text-gray-400 bg-gray-50 px-1 py-0.5 rounded"
+                  >
                     {tag}
                   </span>
                 ))}

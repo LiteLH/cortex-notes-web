@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react'
 export function extractTags(notes) {
   const counts = {}
   for (const note of notes) {
-    for (const tag of (note.tags || [])) {
+    for (const tag of note.tags || []) {
       counts[tag] = (counts[tag] || 0) + 1
     }
   }
@@ -14,9 +14,7 @@ export function extractTags(notes) {
 
 export function filterByTags(notes, selectedTags) {
   if (!selectedTags.length) return notes
-  return notes.filter(note =>
-    selectedTags.some(tag => (note.tags || []).includes(tag))
-  )
+  return notes.filter((note) => selectedTags.some((tag) => (note.tags || []).includes(tag)))
 }
 
 const DEFAULT_VISIBLE = 10
@@ -32,7 +30,9 @@ export function TagFilter({ notes, selectedTags, onToggle }) {
   const visibleCount = expanded ? tags.length : DEFAULT_VISIBLE
   const visibleTags = tags.slice(0, visibleCount)
   // Ensure selected tags are always visible even if beyond the limit
-  const selectedBeyondVisible = expanded ? [] : tags.slice(visibleCount).filter(({ tag }) => selectedTags.includes(tag))
+  const selectedBeyondVisible = expanded
+    ? []
+    : tags.slice(visibleCount).filter(({ tag }) => selectedTags.includes(tag))
   const allVisible = [...visibleTags, ...selectedBeyondVisible]
   const hiddenCount = tags.length - allVisible.length
 

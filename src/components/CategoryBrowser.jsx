@@ -73,7 +73,7 @@ export function CategoryNav({ notes, onNavigate }) {
 
   const counts = useMemo(() => {
     const result = {}
-    safeNotes.forEach(note => {
+    safeNotes.forEach((note) => {
       const { category } = getCategoryFromPath(note.path)
       result[category] = (result[category] || 0) + 1
     })

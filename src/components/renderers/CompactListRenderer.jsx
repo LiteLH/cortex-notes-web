@@ -20,7 +20,7 @@ export function CompactListRenderer({ notes, onNoteClick, emptyMessage, pinnedId
 
   return (
     <div className="space-y-0.5" role="list">
-      {notes.map(note => {
+      {notes.map((note) => {
         const noteType = note.format === 'html' ? 'report' : note.note_type
         const badge = TYPE_BADGE[noteType]
         const tags = [...(note.tags || []), ...(note.ai_tags || [])].slice(0, 2)
@@ -36,7 +36,9 @@ export function CompactListRenderer({ notes, onNoteClick, emptyMessage, pinnedId
               <Star size={12} className="shrink-0 text-amber-500" fill="currentColor" />
             )}
             {badge && (
-              <span className={`shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded ${badge.color}`}>
+              <span
+                className={`shrink-0 px-1.5 py-0.5 text-[10px] font-medium rounded ${badge.color}`}
+              >
                 {badge.label}
               </span>
             )}
@@ -45,16 +47,17 @@ export function CompactListRenderer({ notes, onNoteClick, emptyMessage, pinnedId
             </span>
             {tags.length > 0 && (
               <span className="hidden sm:flex items-center gap-1 shrink-0">
-                {tags.map(tag => (
-                  <span key={tag} className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded"
+                  >
                     {tag}
                   </span>
                 ))}
               </span>
             )}
-            <span className="text-xs text-gray-400 shrink-0">
-              {formatDate(note.created_at)}
-            </span>
+            <span className="text-xs text-gray-400 shrink-0">{formatDate(note.created_at)}</span>
           </button>
         )
       })}

@@ -59,29 +59,40 @@ export function NoteViewer() {
     setLoading(true)
     setError(null)
 
-    const entry = notes.find(n => n.id === id)
+    const entry = notes.find((n) => n.id === id)
     if (!entry) {
       // Not in index — try blind fetch as fallback
       const year = new Date().getFullYear()
       const blindPath = `content/${year}/${id}.md`
-      service.getNote(blindPath)
-        .then(n => { setNote(n); setLoading(false) })
-        .catch(() => { setError("在索引或儲存中找不到筆記"); setLoading(false) })
+      service
+        .getNote(blindPath)
+        .then((n) => {
+          setNote(n)
+          setLoading(false)
+        })
+        .catch(() => {
+          setError('在索引或儲存中找不到筆記')
+          setLoading(false)
+        })
       return
     }
 
     const path = entry.path || `content/${new Date().getFullYear()}/${id}.md`
-    service.getNote(path, entry.format)
-      .then(n => { setNote({ ...entry, ...n }); setLoading(false) })
-      .catch(err => {
-        console.warn("Failed to load note content:", err)
+    service
+      .getNote(path, entry.format)
+      .then((n) => {
+        setNote({ ...entry, ...n })
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.warn('Failed to load note content:', err)
         setError(`筆記內容載入失敗：${err.message}`)
         setLoading(false)
       })
   }, [id, service, notes])
 
   const handleDelete = async () => {
-    if (!confirm("確定要刪除這篇筆記嗎？")) return
+    if (!confirm('確定要刪除這篇筆記嗎？')) return
     setDeleting(true)
     try {
       const path = note?.path || `content/${new Date().getFullYear()}/${id}.md`
@@ -101,25 +112,40 @@ export function NoteViewer() {
     return findRelatedNotes(note, notes, 5)
   }, [notes, note])
 
-  if (loading) return <div className="p-8 flex justify-center"><Loader2 className="animate-spin text-blue-600" /></div>
-  if (error) return (
-    <div className="p-8 text-center">
-      <div className="text-red-500 mb-2">Error: {error}</div>
-      <button onClick={() => window.location.reload()} className="text-blue-500 underline">重試</button>
-    </div>
-  )
+  if (loading)
+    return (
+      <div className="p-8 flex justify-center">
+        <Loader2 className="animate-spin text-blue-600" />
+      </div>
+    )
+  if (error)
+    return (
+      <div className="p-8 text-center">
+        <div className="text-red-500 mb-2">Error: {error}</div>
+        <button onClick={() => window.location.reload()} className="text-blue-500 underline">
+          重試
+        </button>
+      </div>
+    )
   if (!note) return <div className="p-8 text-center">找不到筆記</div>
 
   const isHtml = note.format === 'html'
   const isValidHtmlPath = isHtml && (note.path || '').startsWith('reports/')
 
   return (
-    <div className={isValidHtmlPath
-      ? "mx-auto bg-white min-h-screen pb-24 md:my-4"
-      : "max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100"
-    }>
+    <div
+      className={
+        isValidHtmlPath
+          ? 'mx-auto bg-white min-h-screen pb-24 md:my-4'
+          : 'max-w-3xl mx-auto bg-white min-h-screen pb-24 md:my-8 md:rounded-2xl md:shadow-sm md:border border-gray-100'
+      }
+    >
       <div className="sticky top-0 bg-white/90 backdrop-blur-md border-b border-gray-50 z-10 px-6 py-4 flex justify-between items-center">
-        <button onClick={() => navigate(-1)} aria-label="返回" className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="返回"
+          className="p-2 -ml-2 hover:bg-gray-100 rounded-full text-gray-500"
+        >
           <ArrowRight className="rotate-180" size={20} />
         </button>
         <div className="flex gap-2">
@@ -132,7 +158,12 @@ export function NoteViewer() {
             {deleting ? '刪除中...' : '刪除'}
           </button>
           {!isHtml && (
-            <button onClick={() => navigate(`/edit/${id}`)} className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded">編輯</button>
+            <button
+              onClick={() => navigate(`/edit/${id}`)}
+              className="text-blue-600 font-medium text-sm px-3 hover:bg-blue-50 rounded"
+            >
+              編輯
+            </button>
           )}
         </div>
       </div>
@@ -141,9 +172,15 @@ export function NoteViewer() {
         <StalenessIndicator note={note} />
         <h1 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">{note.title}</h1>
         <div className="flex flex-wrap gap-2 mb-8">
-          {Array.isArray(note.tags) && note.tags.map(t => (
-            <span key={t} className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full">#{t}</span>
-          ))}
+          {Array.isArray(note.tags) &&
+            note.tags.map((t) => (
+              <span
+                key={t}
+                className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full"
+              >
+                #{t}
+              </span>
+            ))}
           <span className="text-xs text-gray-400 py-1 ml-auto">
             {formatDateFull(note.created_at)}
           </span>
@@ -152,10 +189,16 @@ export function NoteViewer() {
         {isValidHtmlPath ? (
           <HtmlRenderer content={note.content} title={note.title} />
         ) : isHtml ? (
-          <div className="text-red-500">Security error: HTML format not allowed for path: {note.path}</div>
+          <div className="text-red-500">
+            Security error: HTML format not allowed for path: {note.path}
+          </div>
         ) : (
           <article className="prose prose-slate prose-lg max-w-none">
-            <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize, rehypeHighlight]} components={markdownComponents}>
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeSanitize, rehypeHighlight]}
+              components={markdownComponents}
+            >
               {note.content || ''}
             </Markdown>
           </article>
@@ -166,7 +209,7 @@ export function NoteViewer() {
           <div className="mt-12 pt-8 border-t border-gray-100">
             <h3 className="text-sm font-semibold text-gray-500 mb-4">相關筆記</h3>
             <div className="space-y-2">
-              {relatedNotes.map(rn => (
+              {relatedNotes.map((rn) => (
                 <button
                   key={rn.id}
                   onClick={() => navigate(`/note/${rn.id}`)}
@@ -174,9 +217,13 @@ export function NoteViewer() {
                 >
                   <FileText size={16} className="text-gray-400 shrink-0" />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-800 truncate">{rn.title || '無標題'}</div>
+                    <div className="text-sm font-medium text-gray-800 truncate">
+                      {rn.title || '無標題'}
+                    </div>
                     {rn.excerpt && (
-                      <div className="text-xs text-gray-400 truncate">{stripMarkdown(rn.excerpt)}</div>
+                      <div className="text-xs text-gray-400 truncate">
+                        {stripMarkdown(rn.excerpt)}
+                      </div>
                     )}
                   </div>
                 </button>

@@ -19,7 +19,7 @@ describe('getDueForReview', () => {
     ]
     const result = getDueForReview(notes)
     expect(result.length).toBe(2)
-    expect(result.map(n => n.id)).toEqual(['1', '2'])
+    expect(result.map((n) => n.id)).toEqual(['1', '2'])
   })
 
   it('returns empty array when no reviews due', () => {

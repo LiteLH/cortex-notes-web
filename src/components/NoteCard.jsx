@@ -18,7 +18,7 @@ const formatDate = formatDateSmart
 
 export function NoteCard({ note, onClick }) {
   const manualTags = note.tags || []
-  const aiTags = (note.ai_tags || []).filter(t => !manualTags.includes(t))
+  const aiTags = (note.ai_tags || []).filter((t) => !manualTags.includes(t))
   const allTags = [...manualTags, ...aiTags]
   const displayTags = allTags.slice(0, MAX_TAGS)
   const overflowCount = allTags.length - MAX_TAGS
@@ -35,9 +35,13 @@ export function NoteCard({ note, onClick }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
           {isHtml ? (
-            <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium rounded text-purple-600 bg-purple-50">報告</span>
+            <span className="shrink-0 px-1.5 py-0.5 text-xs font-medium rounded text-purple-600 bg-purple-50">
+              報告
+            </span>
           ) : TYPE_BADGE[note.note_type] ? (
-            <span className={`shrink-0 px-1.5 py-0.5 text-xs font-medium rounded ${TYPE_BADGE[note.note_type].color}`}>
+            <span
+              className={`shrink-0 px-1.5 py-0.5 text-xs font-medium rounded ${TYPE_BADGE[note.note_type].color}`}
+            >
               {TYPE_BADGE[note.note_type].label}
             </span>
           ) : null}
@@ -50,20 +54,19 @@ export function NoteCard({ note, onClick }) {
         </span>
       </div>
 
-      {excerpt && (
-        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">
-          {excerpt}
-        </p>
-      )}
+      {excerpt && <p className="text-xs text-gray-500 leading-relaxed line-clamp-3">{excerpt}</p>}
 
       {displayTags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-auto">
-          {displayTags.map(tag => (
-            <span key={tag} className={`px-2 py-0.5 text-xs rounded-full ${
-              manualTagSet.has(tag)
-                ? 'bg-gray-100 text-gray-600'
-                : 'bg-violet-50 text-violet-500 border border-violet-200'
-            }`}>
+          {displayTags.map((tag) => (
+            <span
+              key={tag}
+              className={`px-2 py-0.5 text-xs rounded-full ${
+                manualTagSet.has(tag)
+                  ? 'bg-gray-100 text-gray-600'
+                  : 'bg-violet-50 text-violet-500 border border-violet-200'
+              }`}
+            >
               {tag}
             </span>
           ))}

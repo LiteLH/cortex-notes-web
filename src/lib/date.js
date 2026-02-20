@@ -27,7 +27,7 @@ export function formatDateShort(dateStr) {
   }
   if (hasTimePart(dateStr)) {
     throw new Error(
-      `formatDateShort only accepts pure dates (YYYY-MM-DD), got: "${dateStr}". Use formatDateFull() for datetime strings.`
+      `formatDateShort only accepts pure dates (YYYY-MM-DD), got: "${dateStr}". Use formatDateFull() for datetime strings.`,
     )
   }
   try {

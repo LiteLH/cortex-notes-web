@@ -8,7 +8,7 @@ const MIN_AGE_DAYS = 30
 export function seededRandom(seed) {
   let h = 0
   for (let i = 0; i < seed.length; i++) {
-    h = Math.imul(31, h) + seed.charCodeAt(i) | 0
+    h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0
   }
   h = Math.imul(h ^ (h >>> 16), 0x45d9f3b)
   h = Math.imul(h ^ (h >>> 13), 0x45d9f3b)
@@ -18,7 +18,7 @@ export function seededRandom(seed) {
 
 export function pickRediscovery(notes, dateStr) {
   const cutoff = Date.now() - MIN_AGE_DAYS * DAY_MS
-  const eligible = notes.filter(n => {
+  const eligible = notes.filter((n) => {
     if (!n.created_at) return false
     return new Date(n.created_at).getTime() < cutoff
   })
@@ -27,7 +27,7 @@ export function pickRediscovery(notes, dateStr) {
 
   // Weight: decisions > learnings > thoughts > meetings
   const weights = { decision: 4, learning: 3, thought: 2, meeting: 1 }
-  const weighted = eligible.map(n => ({
+  const weighted = eligible.map((n) => ({
     note: n,
     weight: weights[n.note_type] || 1,
   }))
@@ -67,7 +67,7 @@ export function RediscoverySection({ notes, onNoteClick }) {
         回憶角落
       </h2>
       <div className="space-y-2">
-        {picks.map(note => (
+        {picks.map((note) => (
           <button
             key={note.id}
             onClick={() => onNoteClick(note)}

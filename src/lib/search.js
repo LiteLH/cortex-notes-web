@@ -7,7 +7,7 @@ import MiniSearch from 'minisearch'
  */
 export function createSearchIndex(notes) {
   // Check if any note has pre-computed search_tokens
-  const hasPreTokens = notes.some(n => n.search_tokens?.length)
+  const hasPreTokens = notes.some((n) => n.search_tokens?.length)
 
   const index = new MiniSearch({
     fields: hasPreTokens

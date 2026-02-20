@@ -35,14 +35,14 @@ describe('pickRediscovery', () => {
     const result = pickRediscovery([...recentNotes, ...oldNotes], '2026-02-15')
     expect(result.length).toBeGreaterThanOrEqual(1)
     expect(result.length).toBeLessThanOrEqual(2)
-    expect(result.every(n => n.id.startsWith('old-'))).toBe(true)
+    expect(result.every((n) => n.id.startsWith('old-'))).toBe(true)
   })
 
   it('returns same notes for same date', () => {
     const all = [...recentNotes, ...oldNotes]
     const r1 = pickRediscovery(all, '2026-02-15')
     const r2 = pickRediscovery(all, '2026-02-15')
-    expect(r1.map(n => n.id)).toEqual(r2.map(n => n.id))
+    expect(r1.map((n) => n.id)).toEqual(r2.map((n) => n.id))
   })
 
   it('returns empty for no old notes', () => {

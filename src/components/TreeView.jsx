@@ -2,8 +2,14 @@ import { useState, useMemo } from 'react'
 import { ChevronRight, ChevronDown, FolderOpen, Folder, FileText, Globe } from 'lucide-react'
 
 const FOLDER_LABELS = {
-  notes: '筆記', reports: '報告', profile: '個人檔案',
-  decisions: '決策', learnings: '學習', memos: '備忘', meetings: '會議', thoughts: '想法',
+  notes: '筆記',
+  reports: '報告',
+  profile: '個人檔案',
+  decisions: '決策',
+  learnings: '學習',
+  memos: '備忘',
+  meetings: '會議',
+  thoughts: '想法',
 }
 
 function buildTree(notes) {
@@ -51,13 +57,25 @@ function TreeNode({ node, depth = 0, onNoteClick, expandedPaths, toggleExpand })
           style={{ paddingLeft: `${depth * 16 + 8}px` }}
         >
           {hasChildren ? (
-            isExpanded ? <ChevronDown size={14} className="text-gray-400 shrink-0" /> : <ChevronRight size={14} className="text-gray-400 shrink-0" />
+            isExpanded ? (
+              <ChevronDown size={14} className="text-gray-400 shrink-0" />
+            ) : (
+              <ChevronRight size={14} className="text-gray-400 shrink-0" />
+            )
           ) : (
             <span className="w-3.5 shrink-0" />
           )}
-          {isExpanded ? <FolderOpen size={16} className="text-blue-500 shrink-0" /> : <Folder size={16} className="text-gray-400 shrink-0" />}
-          <span className="flex-1 text-gray-700 truncate">{FOLDER_LABELS[node.name] || node.name}</span>
-          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">{totalCount}</span>
+          {isExpanded ? (
+            <FolderOpen size={16} className="text-blue-500 shrink-0" />
+          ) : (
+            <Folder size={16} className="text-gray-400 shrink-0" />
+          )}
+          <span className="flex-1 text-gray-700 truncate">
+            {FOLDER_LABELS[node.name] || node.name}
+          </span>
+          <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded shrink-0">
+            {totalCount}
+          </span>
         </button>
       )}
 
@@ -79,18 +97,21 @@ function TreeNode({ node, depth = 0, onNoteClick, expandedPaths, toggleExpand })
             ))}
 
           {/* Notes in this folder */}
-          {node.notes.map(note => (
+          {node.notes.map((note) => (
             <button
               key={note.id}
               onClick={() => onNoteClick?.(note)}
               className="w-full flex items-center gap-1.5 py-1.5 px-2 text-sm hover:bg-blue-50 rounded-md transition-colors text-left group"
               style={{ paddingLeft: `${(node.name ? depth + 1 : depth) * 16 + 8 + 18}px` }}
             >
-              {note.format === 'html'
-                ? <Globe size={14} className="text-purple-400 shrink-0" />
-                : <FileText size={14} className="text-gray-300 group-hover:text-blue-400 shrink-0" />
-              }
-              <span className="flex-1 text-gray-700 truncate group-hover:text-blue-600">{note.title || '無標題'}</span>
+              {note.format === 'html' ? (
+                <Globe size={14} className="text-purple-400 shrink-0" />
+              ) : (
+                <FileText size={14} className="text-gray-300 group-hover:text-blue-400 shrink-0" />
+              )}
+              <span className="flex-1 text-gray-700 truncate group-hover:text-blue-600">
+                {note.title || '無標題'}
+              </span>
             </button>
           ))}
         </div>
@@ -126,7 +147,7 @@ export function TreeView({ notes, onNoteClick }) {
   })
 
   const toggleExpand = (path) => {
-    setExpandedPaths(prev => {
+    setExpandedPaths((prev) => {
       const next = new Set(prev)
       if (next.has(path)) next.delete(path)
       else next.add(path)
@@ -153,9 +174,19 @@ export function TreeView({ notes, onNoteClick }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2 px-2">
-        <button onClick={expandAll} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">全部展開</button>
+        <button
+          onClick={expandAll}
+          className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+        >
+          全部展開
+        </button>
         <span className="text-gray-200">|</span>
-        <button onClick={collapseAll} className="text-xs text-gray-400 hover:text-blue-600 transition-colors">全部收合</button>
+        <button
+          onClick={collapseAll}
+          className="text-xs text-gray-400 hover:text-blue-600 transition-colors"
+        >
+          全部收合
+        </button>
       </div>
       <div role="tree" aria-label="筆記資料夾結構">
         <TreeNode

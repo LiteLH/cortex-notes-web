@@ -6,13 +6,17 @@ import { AuthProvider, useAuth } from '../AuthContext.jsx'
 const mockStorage = {}
 vi.stubGlobal('localStorage', {
   getItem: vi.fn((key) => mockStorage[key] || null),
-  setItem: vi.fn((key, val) => { mockStorage[key] = val }),
-  removeItem: vi.fn((key) => { delete mockStorage[key] }),
+  setItem: vi.fn((key, val) => {
+    mockStorage[key] = val
+  }),
+  removeItem: vi.fn((key) => {
+    delete mockStorage[key]
+  }),
 })
 
 describe('useAuth', () => {
   beforeEach(() => {
-    Object.keys(mockStorage).forEach(k => delete mockStorage[k])
+    Object.keys(mockStorage).forEach((k) => delete mockStorage[k])
   })
 
   it('starts unauthenticated', () => {

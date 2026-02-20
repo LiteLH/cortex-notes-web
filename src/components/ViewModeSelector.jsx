@@ -5,7 +5,11 @@ const ICONS = { List, LayoutGrid, ArrowUpDown, Clock }
 
 export function ViewModeSelector({ mode, onModeChange }) {
   return (
-    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1" role="radiogroup" aria-label="顯示模式">
+    <div
+      className="flex items-center gap-1 bg-gray-100 rounded-lg p-1"
+      role="radiogroup"
+      aria-label="顯示模式"
+    >
       {VIEW_MODES.map(({ value, label, icon, desktopOnly }) => {
         const Icon = ICONS[icon]
         const isActive = mode === value
@@ -17,9 +21,7 @@ export function ViewModeSelector({ mode, onModeChange }) {
             aria-label={label}
             onClick={() => onModeChange(value)}
             className={`p-1.5 rounded-md transition-colors ${desktopOnly ? 'hidden md:flex' : 'flex'} items-center justify-center ${
-              isActive
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-400 hover:text-gray-600'
+              isActive ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             <Icon size={16} />

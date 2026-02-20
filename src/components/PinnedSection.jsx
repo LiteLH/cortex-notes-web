@@ -16,7 +16,7 @@ export function PinnedSection({ variant = 'sidebar' }) {
           已釘選
         </div>
         <div className="space-y-0.5">
-          {pinnedNotes.map(note => (
+          {pinnedNotes.map((note) => (
             <button
               key={note.id}
               onClick={() => navigate(`/note/${note.id}`)}
@@ -39,7 +39,7 @@ export function PinnedSection({ variant = 'sidebar' }) {
         我的收藏（{pinnedNotes.length}）
       </h2>
       <div className="space-y-1.5">
-        {pinnedNotes.map(note => (
+        {pinnedNotes.map((note) => (
           <button
             key={note.id}
             onClick={() => navigate(`/note/${note.id}`)}

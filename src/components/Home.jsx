@@ -41,7 +41,7 @@ export function Home() {
   const safeNotes = Array.isArray(notes) ? notes : []
   const { config, setMode } = useDisplayConfig()
   const { pins } = useUserState()
-  const pinnedIds = useMemo(() => new Set(pins.map(p => p.noteId)), [pins])
+  const pinnedIds = useMemo(() => new Set(pins.map((p) => p.noteId)), [pins])
 
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -54,7 +54,7 @@ export function Home() {
     if (stats) return { total: stats.last_30_days_count, reports: 0 }
     const now = new Date()
     const monthPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const thisMonth = safeNotes.filter(n => n.created_at?.startsWith(monthPrefix))
+    const thisMonth = safeNotes.filter((n) => n.created_at?.startsWith(monthPrefix))
     return { total: thisMonth.length, reports: 0 }
   }, [safeNotes, stats])
 
@@ -62,7 +62,10 @@ export function Home() {
     setSearchResults(results)
     setSearchQuery(query)
   }
-  const handleSearchClear = () => { setSearchResults(null); setSearchQuery('') }
+  const handleSearchClear = () => {
+    setSearchResults(null)
+    setSearchQuery('')
+  }
   const handleNoteClick = (note) => navigate(`/note/${note.id}`)
   const handleDateClick = (dateStr) => setDateFilter(dateStr)
   const clearDateFilter = () => setDateFilter(null)
@@ -70,7 +73,7 @@ export function Home() {
   // Filter by date
   const dateFilteredNotes = useMemo(() => {
     if (!dateFilter) return safeNotes
-    return safeNotes.filter(note => note.created_at?.startsWith(dateFilter))
+    return safeNotes.filter((note) => note.created_at?.startsWith(dateFilter))
   }, [safeNotes, dateFilter])
 
   // Determine display notes
@@ -80,9 +83,10 @@ export function Home() {
   const hasAnyFacet = facets.types?.length || facets.tags?.length || facets.timeRange
 
   // Pick renderer — on mobile, sortable falls back to compact
-  const effectiveMode = config.mode === 'sortable' && typeof window !== 'undefined' && window.innerWidth < 768
-    ? 'compact'
-    : config.mode
+  const effectiveMode =
+    config.mode === 'sortable' && typeof window !== 'undefined' && window.innerWidth < 768
+      ? 'compact'
+      : config.mode
   const Renderer = RENDERERS[effectiveMode] || CompactListRenderer
 
   return (
@@ -90,7 +94,11 @@ export function Home() {
       {/* Mobile Header */}
       <div className="flex justify-between items-center mb-8 md:hidden">
         <h1 className="text-2xl font-bold text-gray-900">我的筆記</h1>
-        <button onClick={logout} aria-label="登出" className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+        <button
+          onClick={logout}
+          aria-label="登出"
+          className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+        >
           ME
         </button>
       </div>
@@ -118,15 +126,13 @@ export function Home() {
       {/* Calendar (collapsible, desktop) */}
       <div className="mb-6 hidden md:block">
         <button
-          onClick={() => setCalendarOpen(o => !o)}
+          onClick={() => setCalendarOpen((o) => !o)}
           className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-500 hover:text-gray-700 bg-gray-50 rounded-lg transition-colors"
         >
           <span>
             📅 月曆
             {monthlySummary.total > 0 && (
-              <span className="ml-2 text-xs text-gray-400">
-                本月 {monthlySummary.total} 筆
-              </span>
+              <span className="ml-2 text-xs text-gray-400">本月 {monthlySummary.total} 筆</span>
             )}
           </span>
           {calendarOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -141,8 +147,12 @@ export function Home() {
       {/* Date Filter Indicator */}
       {dateFilter && (
         <div className="mb-4 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-          <span>顯示 {dateFilter} 的筆記（{dateFilteredNotes.length} 筆）</span>
-          <button onClick={clearDateFilter} className="ml-auto hover:bg-blue-100 rounded p-0.5"><X size={14} /></button>
+          <span>
+            顯示 {dateFilter} 的筆記（{dateFilteredNotes.length} 筆）
+          </span>
+          <button onClick={clearDateFilter} className="ml-auto hover:bg-blue-100 rounded p-0.5">
+            <X size={14} />
+          </button>
         </div>
       )}
 
@@ -150,7 +160,11 @@ export function Home() {
       <div className="mb-6 space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 overflow-hidden">
-            <FacetedFilter notes={isSearching ? searchResults : dateFilteredNotes} facets={facets} onFacetsChange={setFacets} />
+            <FacetedFilter
+              notes={isSearching ? searchResults : dateFilteredNotes}
+              facets={facets}
+              onFacetsChange={setFacets}
+            />
           </div>
           <ViewModeSelector mode={config.mode} onModeChange={setMode} />
         </div>
@@ -168,7 +182,12 @@ export function Home() {
         </h2>
       )}
 
-      <Renderer notes={displayNotes} onNoteClick={handleNoteClick} emptyMessage="沒有符合條件的筆記" pinnedIds={pinnedIds} />
+      <Renderer
+        notes={displayNotes}
+        onNoteClick={handleNoteClick}
+        emptyMessage="沒有符合條件的筆記"
+        pinnedIds={pinnedIds}
+      />
 
       {isLoading && safeNotes.length === 0 && (
         <div className="space-y-3">
@@ -181,8 +200,13 @@ export function Home() {
       {error && (
         <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg mx-2">
           <p className="font-bold mb-2">載入筆記失敗</p>
-          <p className="text-sm text-red-400 break-all px-4 mb-4">{error.message || String(error)}</p>
-          <button onClick={refreshNotes} className="text-sm text-blue-600 bg-white px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">
+          <p className="text-sm text-red-400 break-all px-4 mb-4">
+            {error.message || String(error)}
+          </p>
+          <button
+            onClick={refreshNotes}
+            className="text-sm text-blue-600 bg-white px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
+          >
             重試
           </button>
         </div>

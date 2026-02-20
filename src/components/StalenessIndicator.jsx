@@ -29,9 +29,11 @@ export function StalenessIndicator({ note }) {
 
   const isWarning = info.level === 'warning'
   return (
-    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm mb-4 ${
-      isWarning ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'
-    }`}>
+    <div
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm mb-4 ${
+        isWarning ? 'bg-amber-50 text-amber-700' : 'bg-gray-50 text-gray-500'
+      }`}
+    >
       {isWarning ? <AlertTriangle size={16} /> : <Clock size={16} />}
       <span>{info.message}</span>
     </div>

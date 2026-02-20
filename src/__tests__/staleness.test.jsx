@@ -26,7 +26,11 @@ describe('getStalenessInfo', () => {
   })
 
   it('returns null for decision with next_review set', () => {
-    const result = getStalenessInfo({ note_type: 'decision', created_at: daysAgo(100), next_review: '2026-03-01' })
+    const result = getStalenessInfo({
+      note_type: 'decision',
+      created_at: daysAgo(100),
+      next_review: '2026-03-01',
+    })
     expect(result).toBeNull()
   })
 

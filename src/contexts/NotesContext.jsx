@@ -16,17 +16,19 @@ export function NotesProvider({ children }) {
     async () => {
       const raw = await service.getNotesIndex()
       // Support new { _stats, notes } format and legacy array format
-      const index = Array.isArray(raw) ? raw : (raw?.notes || [])
-      const stats = Array.isArray(raw) ? null : { ...(raw?._stats || {}), _tag_clusters: raw?._tag_clusters || [] }
+      const index = Array.isArray(raw) ? raw : raw?.notes || []
+      const stats = Array.isArray(raw)
+        ? null
+        : { ...(raw?._stats || {}), _tag_clusters: raw?._tag_clusters || [] }
       const notes = (index || [])
-        .map(n => ({ ...n, created_at: n.created_at || new Date().toISOString() }))
+        .map((n) => ({ ...n, created_at: n.created_at || new Date().toISOString() }))
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
       return { notes, stats }
     },
     {
-      revalidateOnFocus: false,  // Won't auto-refresh when switching back to app; use refreshNotes() to retry manually
-      dedupingInterval: 60000,   // 1 min dedup
-    }
+      revalidateOnFocus: false, // Won't auto-refresh when switching back to app; use refreshNotes() to retry manually
+      dedupingInterval: 60000, // 1 min dedup
+    },
   )
 
   const refreshNotes = useCallback(() => mutate(), [mutate])
@@ -39,41 +41,53 @@ export function NotesProvider({ children }) {
   }, [data])
 
   // Optimistic update: add/update a note in local cache
-  const optimisticUpdate = useCallback((noteData) => {
-    mutate(current => {
-      const notes = current?.notes || []
-      const idx = notes.findIndex(n => n.id === noteData.id)
-      const updatedNotes = idx >= 0
-        ? notes.map((n, i) => i === idx ? { ...n, ...noteData } : n)
-        : [noteData, ...notes]
-      return { ...current, notes: updatedNotes }
-    }, { revalidate: false })
-  }, [mutate])
+  const optimisticUpdate = useCallback(
+    (noteData) => {
+      mutate(
+        (current) => {
+          const notes = current?.notes || []
+          const idx = notes.findIndex((n) => n.id === noteData.id)
+          const updatedNotes =
+            idx >= 0
+              ? notes.map((n, i) => (i === idx ? { ...n, ...noteData } : n))
+              : [noteData, ...notes]
+          return { ...current, notes: updatedNotes }
+        },
+        { revalidate: false },
+      )
+    },
+    [mutate],
+  )
 
   // Optimistic delete: remove a note from local cache
-  const optimisticDelete = useCallback((noteId) => {
-    mutate(current => {
-      const notes = (current?.notes || []).filter(n => n.id !== noteId)
-      return { ...current, notes }
-    }, { revalidate: false })
-  }, [mutate])
-
-  const value = useMemo(() => ({
-    notes: data?.notes || [],
-    stats: data?.stats || null,
-    searchIndex,
-    isLoading,
-    error,
-    refreshNotes,
-    optimisticUpdate,
-    optimisticDelete,
-  }), [data, searchIndex, isLoading, error, refreshNotes, optimisticUpdate, optimisticDelete])
-
-  return (
-    <NotesContext.Provider value={value}>
-      {children}
-    </NotesContext.Provider>
+  const optimisticDelete = useCallback(
+    (noteId) => {
+      mutate(
+        (current) => {
+          const notes = (current?.notes || []).filter((n) => n.id !== noteId)
+          return { ...current, notes }
+        },
+        { revalidate: false },
+      )
+    },
+    [mutate],
   )
+
+  const value = useMemo(
+    () => ({
+      notes: data?.notes || [],
+      stats: data?.stats || null,
+      searchIndex,
+      isLoading,
+      error,
+      refreshNotes,
+      optimisticUpdate,
+      optimisticDelete,
+    }),
+    [data, searchIndex, isLoading, error, refreshNotes, optimisticUpdate, optimisticDelete],
+  )
+
+  return <NotesContext.Provider value={value}>{children}</NotesContext.Provider>
 }
 
 export function useNotes() {

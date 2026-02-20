@@ -23,7 +23,20 @@ function getFirstDayOfWeek(year, month) {
 }
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
-const MONTH_NAMES = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
+const MONTH_NAMES = [
+  '一月',
+  '二月',
+  '三月',
+  '四月',
+  '五月',
+  '六月',
+  '七月',
+  '八月',
+  '九月',
+  '十月',
+  '十一月',
+  '十二月',
+]
 
 export function Calendar({ notes, onDateClick }) {
   const today = new Date()
@@ -33,7 +46,7 @@ export function Calendar({ notes, onDateClick }) {
   // Set of dates that have notes
   const noteDates = useMemo(() => {
     const dates = new Set()
-    for (const note of (notes || [])) {
+    for (const note of notes || []) {
       if (note.created_at) {
         const key = toLocalDateStr(note.created_at)
         if (key) dates.add(key)
@@ -45,7 +58,7 @@ export function Calendar({ notes, onDateClick }) {
   // Count notes per date for this month
   const noteCountByDate = useMemo(() => {
     const counts = {}
-    for (const note of (notes || [])) {
+    for (const note of notes || []) {
       if (note.created_at) {
         const key = toLocalDateStr(note.created_at)
         if (key) counts[key] = (counts[key] || 0) + 1
@@ -59,13 +72,17 @@ export function Calendar({ notes, onDateClick }) {
   const todayStr = toLocalDateStr(today.toISOString())
 
   const goPrev = () => {
-    if (month === 0) { setYear(y => y - 1); setMonth(11) }
-    else setMonth(m => m - 1)
+    if (month === 0) {
+      setYear((y) => y - 1)
+      setMonth(11)
+    } else setMonth((m) => m - 1)
   }
 
   const goNext = () => {
-    if (month === 11) { setYear(y => y + 1); setMonth(0) }
-    else setMonth(m => m + 1)
+    if (month === 11) {
+      setYear((y) => y + 1)
+      setMonth(0)
+    } else setMonth((m) => m + 1)
   }
 
   const cells = []
@@ -95,7 +112,7 @@ export function Calendar({ notes, onDateClick }) {
         title={hasNotes ? `${count} 筆筆記` : '這天沒有筆記'}
       >
         {day}
-      </button>
+      </button>,
     )
   }
 
@@ -114,8 +131,10 @@ export function Calendar({ notes, onDateClick }) {
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {WEEKDAYS.map(d => (
-          <div key={d} className="text-center text-xs text-gray-400 py-1">{d}</div>
+        {WEEKDAYS.map((d) => (
+          <div key={d} className="text-center text-xs text-gray-400 py-1">
+            {d}
+          </div>
         ))}
         {cells}
       </div>

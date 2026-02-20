@@ -39,7 +39,7 @@ export function TodayFocusSection({ notes, onNoteClick }) {
             待回顧（{reviewNotes.length}）
           </div>
           <div className="space-y-1.5">
-            {reviewNotes.map(note => (
+            {reviewNotes.map((note) => (
               <button
                 key={note.id}
                 onClick={() => onNoteClick(note)}
@@ -67,7 +67,7 @@ export function TodayFocusSection({ notes, onNoteClick }) {
             回憶角落
           </div>
           <div className="space-y-1.5">
-            {rediscoveryNotes.map(note => (
+            {rediscoveryNotes.map((note) => (
               <button
                 key={note.id}
                 onClick={() => onNoteClick(note)}

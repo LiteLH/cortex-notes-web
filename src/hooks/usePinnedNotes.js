@@ -9,10 +9,8 @@ export function usePinnedNotes() {
   // Resolve pin IDs to full note objects, preserve pin order (newest first)
   const pinnedNotes = useMemo(() => {
     if (!pins.length || !notes.length) return []
-    const noteMap = new Map(notes.map(n => [n.id, n]))
-    return pins
-      .map(p => noteMap.get(p.noteId))
-      .filter(Boolean)
+    const noteMap = new Map(notes.map((n) => [n.id, n]))
+    return pins.map((p) => noteMap.get(p.noteId)).filter(Boolean)
   }, [pins, notes])
 
   return { pinnedNotes, togglePin, isPinned }

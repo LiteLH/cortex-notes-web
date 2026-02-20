@@ -3,9 +3,9 @@ import { useState, useCallback } from 'react'
 const STORAGE_KEY = 'cortex-display-config'
 
 const DEFAULTS = {
-  mode: 'compact',  // compact | card | sortable | timeline
-  sort: 'date',     // date | title | type
-  sortDir: 'desc',  // asc | desc
+  mode: 'compact', // compact | card | sortable | timeline
+  sort: 'date', // date | title | type
+  sortDir: 'desc', // asc | desc
 }
 
 function loadConfig() {
@@ -29,16 +29,19 @@ export function useDisplayConfig() {
   const [config, setConfigState] = useState(loadConfig)
 
   const setConfig = useCallback((updater) => {
-    setConfigState(prev => {
+    setConfigState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
       saveConfig(next)
       return next
     })
   }, [])
 
-  const setMode = useCallback((mode) => setConfig(c => ({ ...c, mode })), [setConfig])
-  const setSort = useCallback((sort) => setConfig(c => ({ ...c, sort })), [setConfig])
-  const toggleSortDir = useCallback(() => setConfig(c => ({ ...c, sortDir: c.sortDir === 'asc' ? 'desc' : 'asc' })), [setConfig])
+  const setMode = useCallback((mode) => setConfig((c) => ({ ...c, mode })), [setConfig])
+  const setSort = useCallback((sort) => setConfig((c) => ({ ...c, sort })), [setConfig])
+  const toggleSortDir = useCallback(
+    () => setConfig((c) => ({ ...c, sortDir: c.sortDir === 'asc' ? 'desc' : 'asc' })),
+    [setConfig],
+  )
 
   return { config, setMode, setSort, toggleSortDir }
 }
