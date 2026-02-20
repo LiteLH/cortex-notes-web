@@ -16,7 +16,7 @@ export function getCategoryFromPath(path) {
 export function CategoryBrowser() {
   const navigate = useNavigate()
   const { notes, stats } = useNotes()
-  const safeNotes = Array.isArray(notes) ? notes : []
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes])
   const [viewMode, setViewMode] = useState('tree') // 'tree' | 'tags'
 
   // Read tag_clusters from stats context (passed via index.json)
@@ -69,7 +69,7 @@ export function CategoryBrowser() {
 
 // 側邊欄分類導航組件 (preserved for Layout.jsx)
 export function CategoryNav({ notes, onNavigate }) {
-  const safeNotes = Array.isArray(notes) ? notes : []
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes])
 
   const counts = useMemo(() => {
     const result = {}

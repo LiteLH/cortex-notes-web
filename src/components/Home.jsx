@@ -38,7 +38,7 @@ export function Home() {
   const navigate = useNavigate()
   const { logout } = useAuth()
   const { notes, stats, isLoading, error, refreshNotes } = useNotes()
-  const safeNotes = Array.isArray(notes) ? notes : []
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes])
   const { config, setMode } = useDisplayConfig()
   const { pins } = useUserState()
   const pinnedIds = useMemo(() => new Set(pins.map((p) => p.noteId)), [pins])

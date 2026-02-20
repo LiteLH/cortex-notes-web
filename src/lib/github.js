@@ -121,7 +121,7 @@ export class GitHubService {
     try {
       const existing = await this.getFileContent(path)
       sha = existing.sha
-    } catch (e) {
+    } catch {
       /* ignore 404 */
     }
 

@@ -12,7 +12,6 @@ import { Loader2, ArrowRight, FileText, Copy, Check } from 'lucide-react'
 import { StalenessIndicator } from './StalenessIndicator.jsx'
 import { PinButton } from './PinButton.jsx'
 import { stripMarkdown } from '../lib/markdown.js'
-import { isValid } from 'date-fns'
 import { formatDateFull } from '../lib/date.js'
 
 function CodeBlock({ children, ...props }) {

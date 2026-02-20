@@ -17,7 +17,7 @@ function buildTree(notes) {
 
   for (const note of notes) {
     const parts = (note.path || '').split('/')
-    const fileName = parts.pop()
+    parts.pop()
     let current = root
 
     for (const part of parts) {

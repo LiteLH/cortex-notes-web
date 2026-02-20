@@ -52,13 +52,18 @@ export function pickRediscovery(notes, dateStr) {
 }
 
 export function RediscoverySection({ notes, onNoteClick }) {
-  const now = new Date()
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const { today, nowMs } = useMemo(() => {
+    const d = new Date()
+    return {
+      today: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      nowMs: d.getTime(),
+    }
+  }, [])
   const picks = useMemo(() => pickRediscovery(notes, today), [notes, today])
 
   if (picks.length === 0) return null
 
-  const daysAgo = (dateStr) => Math.floor((Date.now() - new Date(dateStr).getTime()) / DAY_MS)
+  const daysAgo = (dateStr) => Math.floor((nowMs - new Date(dateStr).getTime()) / DAY_MS)
 
   return (
     <div className="mb-6 bg-violet-50 border border-violet-200 rounded-xl p-4">

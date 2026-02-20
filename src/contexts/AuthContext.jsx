@@ -8,13 +8,10 @@ export function AuthProvider({ children }) {
   const [service, setService] = useState(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [authError, setAuthError] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(() => !!token)
 
   useEffect(() => {
-    if (!token) {
-      setIsLoading(false)
-      return
-    }
+    if (!token) return
 
     const svc = new GitHubService(token)
     svc
@@ -53,6 +50,7 @@ export function AuthProvider({ children }) {
     setToken('')
     setService(null)
     setIsAuthenticated(false)
+    setIsLoading(false)
   }, [])
 
   return (

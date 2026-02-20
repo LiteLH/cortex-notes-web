@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { PinnedSection } from './PinnedSection.jsx'
 import { Command as CommandPrimitive } from 'cmdk'
-import { isValid } from 'date-fns'
 import { formatDateSmart } from '../lib/date.js'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
@@ -24,6 +23,7 @@ function cn(...inputs) {
   return twMerge(clsx(inputs))
 }
 
+// eslint-disable-next-line no-unused-vars -- Icon is used in JSX
 function SidebarItem({ icon: Icon, label, active, onClick }) {
   return (
     <button
@@ -44,7 +44,7 @@ function Sidebar({ onOpenCmd, className = '' }) {
   const location = useLocation()
   const { logout } = useAuth()
   const { notes } = useNotes()
-  const safeNotes = Array.isArray(notes) ? notes : []
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes])
 
   const recentNotes = useMemo(() => safeNotes.slice(0, 5), [safeNotes])
   const tags = useMemo(() => {
@@ -218,7 +218,7 @@ function MobileNav({ onOpenCmd }) {
 function CommandPalette({ open, onOpenChange }) {
   const navigate = useNavigate()
   const { notes } = useNotes()
-  const safeNotes = Array.isArray(notes) ? notes : []
+  const safeNotes = useMemo(() => (Array.isArray(notes) ? notes : []), [notes])
 
   return (
     <CommandPrimitive.Dialog
