@@ -11,7 +11,7 @@ function renderWithRouter(ui) {
 describe('TodayFocusSection', () => {
   it('shows empty state message when no review or rediscovery notes', () => {
     renderWithRouter(<TodayFocusSection notes={[]} onNoteClick={() => {}} />)
-    expect(screen.getByText(/持續記錄/)).toBeDefined()
+    expect(screen.getByText(/目前沒有到期/)).toBeDefined()
   })
 
   it('shows review notes when next_review is due', () => {

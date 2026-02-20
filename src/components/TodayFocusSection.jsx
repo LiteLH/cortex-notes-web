@@ -22,7 +22,7 @@ export function TodayFocusSection({ notes, onNoteClick }) {
   if (!hasContent) {
     return (
       <div className="mb-6 bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
-        <p className="text-sm text-gray-400">持續記錄，這裡會自動推薦值得回顧的筆記</p>
+        <p className="text-sm text-gray-400">目前沒有到期的回顧或可推薦的舊筆記</p>
       </div>
     )
   }

@@ -173,7 +173,7 @@ export function Home() {
       {/* Content */}
       {isSearching && (
         <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
-          搜尋「{searchQuery}」的結果（{displayNotes.length} 筆）
+          搜尋「{searchQuery}」的結果（{displayNotes.length} 筆，依相關性排列）
         </h2>
       )}
       {!isSearching && (hasAnyFacet || dateFilter) && (

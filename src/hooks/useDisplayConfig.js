@@ -4,8 +4,6 @@ const STORAGE_KEY = 'cortex-display-config'
 
 const DEFAULTS = {
   mode: 'compact', // compact | card | sortable | timeline
-  sort: 'date', // date | title | type
-  sortDir: 'desc', // asc | desc
 }
 
 function loadConfig() {
@@ -37,24 +35,24 @@ export function useDisplayConfig() {
   }, [])
 
   const setMode = useCallback((mode) => setConfig((c) => ({ ...c, mode })), [setConfig])
-  const setSort = useCallback((sort) => setConfig((c) => ({ ...c, sort })), [setConfig])
-  const toggleSortDir = useCallback(
-    () => setConfig((c) => ({ ...c, sortDir: c.sortDir === 'asc' ? 'desc' : 'asc' })),
-    [setConfig],
-  )
 
-  return { config, setMode, setSort, toggleSortDir }
+  return { config, setMode }
 }
 
 export const VIEW_MODES = [
-  { value: 'compact', label: '列表', icon: 'List' },
-  { value: 'card', label: '卡片', icon: 'LayoutGrid' },
-  { value: 'sortable', label: '排序', icon: 'ArrowUpDown', desktopOnly: true },
-  { value: 'timeline', label: '時間軸', icon: 'Clock' },
-]
-
-export const SORT_OPTIONS = [
-  { value: 'date', label: '日期' },
-  { value: 'title', label: '標題' },
-  { value: 'type', label: '類型' },
+  { value: 'compact', label: '列表', icon: 'List', tooltip: '列表模式（依時間排序）' },
+  { value: 'card', label: '卡片', icon: 'LayoutGrid', tooltip: '卡片模式（依時間排序）' },
+  {
+    value: 'sortable',
+    label: '排序',
+    icon: 'ArrowUpDown',
+    desktopOnly: true,
+    tooltip: '欄位排序模式（可點標題切換）',
+  },
+  {
+    value: 'timeline',
+    label: '時間軸',
+    icon: 'Clock',
+    tooltip: '時間軸模式（按今天/昨天/本週分組）',
+  },
 ]

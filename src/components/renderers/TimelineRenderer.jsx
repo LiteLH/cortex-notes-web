@@ -68,7 +68,7 @@ export function TimelineRenderer({ notes, onNoteClick, emptyMessage, pinnedIds }
         }
         if (isToday(date)) groups['今天'].push(note)
         else if (isYesterday(date)) groups['昨天'].push(note)
-        else if (isThisWeek(date)) groups['本週'].push(note)
+        else if (isThisWeek(date, { weekStartsOn: 1 })) groups['本週'].push(note)
         else groups['更早'].push(note)
       } catch {
         groups['更早'].push(note)

@@ -22,7 +22,13 @@ export function NotesProvider({ children }) {
         : { ...(raw?._stats || {}), _tag_clusters: raw?._tag_clusters || [] }
       const notes = (index || [])
         .map((n) => ({ ...n, created_at: n.created_at || new Date().toISOString() }))
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .sort((a, b) => {
+          const da = (a.created_at || '').slice(0, 10)
+          const db = (b.created_at || '').slice(0, 10)
+          const cmp = db.localeCompare(da)
+          if (cmp !== 0) return cmp
+          return (a.title || '').localeCompare(b.title || '', 'zh-TW')
+        })
       return { notes, stats }
     },
     {

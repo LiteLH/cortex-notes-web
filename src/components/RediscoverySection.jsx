@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Sparkles, ArrowRight } from 'lucide-react'
 
 const DAY_MS = 86400000
-const MIN_AGE_DAYS = 30
+const MIN_AGE_DAYS = 7
 
 // Simple seeded PRNG (hash-based)
 export function seededRandom(seed) {

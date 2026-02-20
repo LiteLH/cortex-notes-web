@@ -44,8 +44,18 @@ function compareFn(a, b, key, dir) {
       const tb = b.format === 'html' ? 'report' : b.note_type || 'zzz'
       return mul * ta.localeCompare(tb)
     }
-    case 'created_at':
-      return mul * (a.created_at || '').localeCompare(b.created_at || '')
+    case 'tags': {
+      const ta = [...(a.tags || []), ...(a.ai_tags || [])].join(',')
+      const tb = [...(b.tags || []), ...(b.ai_tags || [])].join(',')
+      return mul * ta.localeCompare(tb, 'zh-TW')
+    }
+    case 'created_at': {
+      const da = (a.created_at || '').slice(0, 10)
+      const db = (b.created_at || '').slice(0, 10)
+      const cmp = da.localeCompare(db)
+      if (cmp !== 0) return mul * cmp
+      return (a.title || '').localeCompare(b.title || '', 'zh-TW')
+    }
     default:
       return 0
   }
