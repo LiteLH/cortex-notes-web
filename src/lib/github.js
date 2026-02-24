@@ -28,6 +28,8 @@ function toBase64(str) {
 const DB_REPO_OWNER = 'LiteLH' // Replace with your username if different
 const DB_REPO_NAME = 'cortex-notes-db'
 const INDEX_PATH = 'index.json'
+// R2 CDN URL — set via VITE_R2_INDEX_URL env var at build time
+const R2_INDEX_URL = import.meta.env.VITE_R2_INDEX_URL || ''
 
 function assertSafePath(path) {
   if (!path || path.includes('..') || path.startsWith('/')) {
@@ -81,8 +83,18 @@ export class GitHubService {
   }
 
   async getNotesIndex() {
-    // Use raw media type — returns file content directly (no base64 wrapper)
-    // Saves ~33% transfer size; add 15s timeout to prevent indefinite hanging
+    // 1. Try R2 CDN first — faster, no size limit, no auth overhead
+    if (R2_INDEX_URL) {
+      try {
+        const resp = await fetch(R2_INDEX_URL, {
+          signal: AbortSignal.timeout(10000),
+        })
+        if (resp.ok) return await resp.json()
+      } catch (e) {
+        console.warn('R2 fetch failed, falling back to GitHub:', e)
+      }
+    }
+    // 2. Fallback: GitHub raw API (no base64 wrapper, 15s timeout)
     const resp = await fetch(
       `https://api.github.com/repos/${DB_REPO_OWNER}/${DB_REPO_NAME}/contents/${INDEX_PATH}`,
       {
