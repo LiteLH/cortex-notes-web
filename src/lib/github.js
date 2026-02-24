@@ -81,8 +81,22 @@ export class GitHubService {
   }
 
   async getNotesIndex() {
-    const file = await this.getFileContent(INDEX_PATH)
-    return JSON.parse(file.content)
+    // Use raw media type — returns file content directly (no base64 wrapper)
+    // Saves ~33% transfer size; add 15s timeout to prevent indefinite hanging
+    const resp = await fetch(
+      `https://api.github.com/repos/${DB_REPO_OWNER}/${DB_REPO_NAME}/contents/${INDEX_PATH}`,
+      {
+        headers: {
+          Authorization: `token ${this.token}`,
+          Accept: 'application/vnd.github.raw',
+        },
+        signal: AbortSignal.timeout(15000),
+      },
+    )
+    if (!resp.ok) {
+      throw new Error(`GitHub API ${resp.status}: ${resp.statusText}`)
+    }
+    return await resp.json()
   }
 
   async getNote(path, format) {

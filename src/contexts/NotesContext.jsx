@@ -34,6 +34,7 @@ export function NotesProvider({ children }) {
     {
       revalidateOnFocus: false, // Won't auto-refresh when switching back to app; use refreshNotes() to retry manually
       dedupingInterval: 60000, // 1 min dedup
+      errorRetryCount: 1, // Max 1 auto-retry (2 attempts total); manual retry via refreshNotes()
     },
   )
 

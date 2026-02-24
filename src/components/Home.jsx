@@ -89,7 +89,13 @@ export function Home() {
       : config.mode
   const Renderer = RENDERERS[effectiveMode] || CompactListRenderer
 
-  const initialLoading = isLoading && safeNotes.length === 0
+  // Three mutually exclusive display states:
+  // 1. showSkeleton: first load, no data yet, no error
+  // 2. showError: error occurred, no data loaded
+  // 3. showContent: data available, or no data + idle (shows empty state)
+  const noData = safeNotes.length === 0
+  const showSkeleton = isLoading && noData && !error
+  const showError = error && noData
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-24">
@@ -115,8 +121,8 @@ export function Home() {
         <InsightBar stats={stats} />
       </div>
 
-      {/* Loading skeleton — replaces all content sections during initial load */}
-      {initialLoading && (
+      {/* Loading skeleton — shows during first load (max 15s before timeout) */}
+      {showSkeleton && (
         <div className="space-y-3 mt-6">
           <SkeletonCard />
           <SkeletonCard />
@@ -126,8 +132,8 @@ export function Home() {
         </div>
       )}
 
-      {/* Error state */}
-      {error && !initialLoading && (
+      {/* Error state — shows immediately after timeout, even during SWR retry */}
+      {showError && (
         <div className="text-center py-10 text-red-500 bg-red-50 rounded-lg mx-2">
           <p className="font-bold mb-2">載入筆記失敗</p>
           <p className="text-sm text-red-400 break-all px-4 mb-4">
@@ -143,7 +149,7 @@ export function Home() {
       )}
 
       {/* Main content — only render after data is available */}
-      {!initialLoading && !error && (
+      {!showSkeleton && !showError && (
         <>
           {/* Pinned Notes (mobile — sidebar handles desktop) */}
           {!isSearching && (
