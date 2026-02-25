@@ -68,7 +68,7 @@ export class GitHubService {
       if (data.content) {
         content = fromBase64(data.content)
       } else if (data.download_url) {
-        const resp = await fetch(data.download_url)
+        const resp = await fetch(data.download_url, { cache: 'no-store' })
         if (!resp.ok)
           throw new Error(`Failed to download ${path}: ${resp.status} ${resp.statusText}`)
         content = await resp.text()
@@ -87,6 +87,7 @@ export class GitHubService {
     if (R2_INDEX_URL) {
       try {
         const resp = await fetch(R2_INDEX_URL, {
+          cache: 'no-store',
           signal: AbortSignal.timeout(10000),
         })
         if (resp.ok) return await resp.json()
@@ -102,6 +103,7 @@ export class GitHubService {
           Authorization: `token ${this.token}`,
           Accept: 'application/vnd.github.raw',
         },
+        cache: 'no-store',
         signal: AbortSignal.timeout(15000),
       },
     )
