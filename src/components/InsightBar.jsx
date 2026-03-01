@@ -1,4 +1,4 @@
-import { BarChart3, Clock, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 const TYPE_LABELS = {
   decision: '決策',
@@ -17,7 +17,6 @@ export function InsightBar({ stats }) {
     type_distribution,
     last_30_days_count,
     prev_30_days_count,
-    pending_reviews,
     total_notes,
   } = stats
   const trend = last_30_days_count - prev_30_days_count
@@ -68,16 +67,6 @@ export function InsightBar({ stats }) {
         ))}
       </div>
 
-      {/* Pending reviews */}
-      {pending_reviews > 0 && (
-        <>
-          <span className="text-gray-200">|</span>
-          <div className="flex items-center gap-1 shrink-0 text-amber-600">
-            <Clock size={12} />
-            <span>{pending_reviews} 待回顧</span>
-          </div>
-        </>
-      )}
     </div>
   )
 }
