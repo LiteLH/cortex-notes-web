@@ -2,7 +2,7 @@ import { createSearchIndex, searchNotes } from './search.js'
 
 /**
  * Find related notes.
- * Prefers pre-computed `related` field from index.json (TF-IDF, build-time).
+ * Prefers pre-computed `related` field from index.json (TF-IDF + Gemini Embedding 2 cosine, build-time).
  * Falls back to client-side weighted scoring if not available.
  */
 export function findRelatedNotes(currentNote, allNotes, maxResults = 5) {
@@ -25,7 +25,7 @@ export function findRelatedNotes(currentNote, allNotes, maxResults = 5) {
   if (allNotes.length > 1) {
     const index = createSearchIndex(allNotes)
     const query = [currentNote.title, ...(currentNote.tags || [])].join(' ')
-    const results = searchNotes(index, query)
+    const { hits: results } = searchNotes(index, query)
     const maxScore = results[0]?.score || 1
     for (const r of results) {
       searchScores[r.id] = r.score / maxScore

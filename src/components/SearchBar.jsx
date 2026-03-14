@@ -20,14 +20,14 @@ export function SearchBar({ onResults, onClear }) {
           return
         }
         if (!searchIndex) return
-        const hits = searchNotes(searchIndex, q)
+        const { hits, expanded } = searchNotes(searchIndex, q)
         // Map search results back to full note objects
         const hitIds = new Set(hits.map((h) => h.id))
         const results = notes.filter((n) => hitIds.has(n.id))
         // Sort by search score
         const scoreMap = Object.fromEntries(hits.map((h) => [h.id, h.score]))
         results.sort((a, b) => (scoreMap[b.id] || 0) - (scoreMap[a.id] || 0))
-        onResults?.(results, q)
+        onResults?.(results, q, { total: notes.length, expanded })
       }, 150)
     },
     [searchIndex, notes, onResults, onClear],

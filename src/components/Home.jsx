@@ -45,6 +45,7 @@ export function Home() {
 
   const [searchResults, setSearchResults] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchMeta, setSearchMeta] = useState(null)
   const [facets, setFacets] = useState({})
   const [dateFilter, setDateFilter] = useState(null)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -58,13 +59,15 @@ export function Home() {
     return { total: thisMonth.length, reports: 0 }
   }, [safeNotes, stats])
 
-  const handleSearchResults = (results, query) => {
+  const handleSearchResults = (results, query, meta) => {
     setSearchResults(results)
     setSearchQuery(query)
+    setSearchMeta(meta || null)
   }
   const handleSearchClear = () => {
     setSearchResults(null)
     setSearchQuery('')
+    setSearchMeta(null)
   }
   const handleNoteClick = (note) => navigate(`/note/${note.id}`)
   const handleDateClick = (dateStr) => setDateFilter(dateStr)
@@ -212,9 +215,21 @@ export function Home() {
 
           {/* Content */}
           {isSearching && (
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">
-              搜尋「{searchQuery}」的結果（{displayNotes.length} 筆，依相關性排列）
-            </h2>
+            <div className="mb-4 ml-1">
+              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                {displayNotes.length > 0
+                  ? `搜尋「${searchQuery}」的結果（${displayNotes.length} 筆，依相關性排列）`
+                  : `在 ${searchMeta?.total || safeNotes.length} 篇筆記中搜尋「${searchQuery}」— 沒有匹配結果`}
+              </h2>
+              {searchMeta?.expanded && displayNotes.length > 0 && (
+                <p className="text-xs text-blue-500 mt-1">已自動擴展同義詞搜尋</p>
+              )}
+              {displayNotes.length === 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  試試用不同的關鍵字、英文或中文重新搜尋
+                </p>
+              )}
+            </div>
           )}
           {!isSearching && (hasAnyFacet || dateFilter) && (
             <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 ml-1">

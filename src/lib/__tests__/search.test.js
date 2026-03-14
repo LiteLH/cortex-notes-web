@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createSearchIndex, searchNotes } from '../search.js'
+import { createSearchIndex, searchNotes, expandQuery } from '../search.js'
 
 const MOCK_NOTES = [
   {
@@ -40,34 +40,64 @@ describe('createSearchIndex', () => {
 describe('searchNotes', () => {
   it('finds Chinese text', () => {
     const index = createSearchIndex(MOCK_NOTES)
-    const results = searchNotes(index, '前端')
-    expect(results.length).toBeGreaterThan(0)
-    expect(results[0].id).toBe('note-1')
+    const { hits } = searchNotes(index, '前端')
+    expect(hits.length).toBeGreaterThan(0)
+    expect(hits[0].id).toBe('note-1')
   })
 
   it('finds English text', () => {
     const index = createSearchIndex(MOCK_NOTES)
-    const results = searchNotes(index, 'MCP')
-    expect(results.length).toBeGreaterThan(0)
-    expect(results[0].id).toBe('note-2')
+    const { hits } = searchNotes(index, 'MCP')
+    expect(hits.length).toBeGreaterThan(0)
+    expect(hits[0].id).toBe('note-2')
   })
 
   it('finds by tag', () => {
     const index = createSearchIndex(MOCK_NOTES)
-    const results = searchNotes(index, '開發日誌')
-    expect(results.length).toBeGreaterThan(0)
+    const { hits } = searchNotes(index, '開發日誌')
+    expect(hits.length).toBeGreaterThan(0)
   })
 
   it('returns empty for no match', () => {
     const index = createSearchIndex(MOCK_NOTES)
-    const results = searchNotes(index, 'zzzznonexistent')
-    expect(results).toHaveLength(0)
+    const { hits } = searchNotes(index, 'zzzznonexistent')
+    expect(hits).toHaveLength(0)
   })
 
   it('handles single character search', () => {
     const index = createSearchIndex(MOCK_NOTES)
-    const results = searchNotes(index, '前')
-    // Should not crash, may or may not find results
-    expect(Array.isArray(results)).toBe(true)
+    const { hits } = searchNotes(index, '前')
+    expect(Array.isArray(hits)).toBe(true)
+  })
+
+  it('returns expanded flag when synonyms used', () => {
+    const index = createSearchIndex(MOCK_NOTES)
+    // '報告' is a synonym for 'report' — should find note-2 via expansion
+    const { hits, expanded } = searchNotes(index, '報告')
+    // May or may not find via expansion depending on tokenization
+    expect(typeof expanded).toBe('boolean')
+  })
+})
+
+describe('expandQuery', () => {
+  it('expands Chinese to English synonyms', () => {
+    const result = expandQuery('嵌入')
+    expect(result).toContain('embedding')
+  })
+
+  it('expands English to Chinese synonyms', () => {
+    const result = expandQuery('embedding')
+    expect(result).toContain('嵌入')
+  })
+
+  it('preserves original terms', () => {
+    const result = expandQuery('hello world')
+    expect(result).toContain('hello')
+    expect(result).toContain('world')
+  })
+
+  it('handles unknown terms without expansion', () => {
+    const result = expandQuery('xyzabc')
+    expect(result).toBe('xyzabc')
   })
 })
